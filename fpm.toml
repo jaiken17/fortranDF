@@ -1,0 +1,18 @@
+name = "data_frame_module"
+version = "0.1.0"
+license = "license"
+author = "jaiken17"
+maintainer = "jaiken17@ubishops.ca"
+copyright = "Copyright 2024, jaiken17"
+[build]
+auto-executables = true
+auto-tests = true
+auto-examples = true
+module-naming = false
+[install]
+library = false
+[fortran]
+implicit-typing = false
+implicit-external = false
+source-form = "free"
+
