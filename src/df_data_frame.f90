@@ -1,4 +1,4 @@
-module data_frame_module
+module df_data_frame
     use,intrinsic :: iso_fortran_env, only: STD_OUT => output_unit
     use df_precision
     use df_column_class
@@ -558,4 +558,4 @@ contains
     ! end subroutine read_mesa_history
 
 
-end module data_frame_module
+end module df_data_frame

@@ -1,6 +1,6 @@
 program main
-    use,intrinsic :: iso_fortran_env, only: rk=>real64, ik=>int32
-    use data_frame_module
+    use df_precision
+    use df_data_frame
     implicit none
 
     type(data_frame) :: df
