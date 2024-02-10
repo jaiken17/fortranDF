@@ -6,12 +6,23 @@ program main
     type(data_frame) :: df
 
     call df%new()
-    call df%append([1,2,3,4],"int")
+    call df%append([1,2,3,4],"index")
+    call df%append([3.0_rk, 2.0_rk, 7.d-6, 5.0_rk],"value")
+    call df%append(["hello","world","test1","test2"], " chars")
+    call df%append([.true.,.true.,.false.,.true.],"truth")
 
-    print*, df%geti(1,3)
+    call df%write()
 
-    call df%append([3.0_rk, 2.0_rk, 7.d-6, 5.0_rk],"float")
+    call df%destroy()
 
-    print*, df%getr(2,3)
+    print*, " "
+
+
+    call df%new()
+    call df%append([.true.,.true.,.false.,.false.],"a")
+    call df%append([.true.,.false.,.true.,.false.],"b")
+    call df%append([.true.,.false.,.false.,.false.],"a .and. b")
+
+    call df%write()
 
 end program main

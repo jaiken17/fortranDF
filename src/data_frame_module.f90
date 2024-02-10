@@ -1,72 +1,14 @@
 module data_frame_module
-    use,intrinsic :: iso_fortran_env, only: rk=>real64, ik=>int32
+    use,intrinsic :: iso_fortran_env, only: STD_OUT => output_unit
+    use df_precision
+    use df_column_class
     implicit none
     private
 
     public :: data_frame
 
-    integer,parameter,public :: INTEGER = 1,       &
-                                REAL = 2,          &
-                                LOGICAL = 3,       &
-                                CHARACTER = 4,     &
-                                COMPLEX = 5
-
-    integer,parameter :: MAX_CHAR_LEN_DEFAULT = 100
-
-
-! ~~~~~ COLUMN TYPE ~~~~~
-
-    type :: column
-        private
-        
-        integer :: dtype, n
-        real(rk),dimension(:),allocatable :: rcol
-        integer(ik),dimension(:),allocatable :: icol
-        logical,dimension(:),allocatable :: lcol
-        character(len=:),dimension(:),allocatable :: charcol
-        complex(rk),dimension(:),allocatable :: ccol
     
-    contains
-        private
-
-        procedure :: col_constructor_real,       &
-                     col_constructor_integer,    &
-                     col_constructor_logical,    &
-                     col_constructor_character,  &
-                     col_constructor_complex
-        generic :: new => col_constructor_real,       &
-                          col_constructor_integer,    &
-                          col_constructor_logical,    &
-                          col_constructor_character,  &
-                          col_constructor_complex
-        procedure :: destroy => col_destructor
-
-        procedure :: get_type => get_from_col_dtype
-
-        procedure :: get_from_col_real,         &
-                     get_from_col_integer,      &
-                     get_from_col_logical,      &
-                     get_from_col_character,    &
-                     get_from_col_complex
-        procedure :: get_single_col_real,       &
-                     get_single_col_integer,    &
-                     get_single_col_logical,    &
-                     get_single_col_character,  &
-                     get_single_col_complex
-        generic :: getr => get_from_col_real, get_single_col_real
-        generic :: geti => get_from_col_integer, get_single_col_integer
-        generic :: getl => get_from_col_logical, get_single_col_logical
-        generic :: getch => get_from_col_character, get_single_col_character
-        generic :: getc => get_from_col_complex, get_single_col_complex
-        
-        procedure :: changer => change_col_real
-        procedure :: changei => change_col_integer
-        procedure :: changel => change_col_logical
-        procedure :: changech => change_col_character
-        procedure :: changec => change_col_complex
-
-    end type column
-
+    integer,parameter :: MAX_CHAR_LEN_DEFAULT = 100
 
 
 
@@ -98,6 +40,9 @@ module data_frame_module
         procedure,public :: getl => df_get_val_logical
         procedure,public :: getch => df_get_val_character
         procedure,public :: getc => df_get_val_complex
+
+        procedure :: df_write_unformatted
+        generic,public :: write => df_write_unformatted
     end type data_frame
 
 
@@ -133,6 +78,8 @@ contains
         do i=1,this%n
             call this%data_cols(i)%destroy()
         end do
+
+        if (this%n >= 1) deallocate(this%data_cols)
 
         if (allocated(this%headers)) deallocate(this%headers)
 
@@ -435,282 +382,128 @@ contains
     end function df_get_val_complex
 
 
+! ~~~~ Write Data Frame
+
+    subroutine df_write_unformatted(this,unit,iostat)
+        ! If format args are given, must be in form: "i20", "f10.5", "ES30.20", etc.
+        ! -> Formats canot have parentheses 
+        class(data_frame),intent(in) :: this
+        integer,intent(in),optional :: unit
+        integer,intent(out),optional :: iostat
+
+        character(len=100) :: rfmt, ifmt, lfmt, chfmt, cfmt, fmt_widthch, pfmt
+        character(len=:),allocatable :: output_char
+        integer :: fmt_widthi
+        integer :: io_unit, io_err
+
+        integer :: i, j
+        integer :: num_cols, len_cols
+
+        if (present(unit)) then
+            io_unit = unit
+        else
+            io_unit = STD_OUT
+        end if
 
+        fmt_widthi = 23
+        allocate(character(fmt_widthi) :: output_char)
+        write(fmt_widthch,"(i10)") fmt_widthi
+        rfmt = "ES"//trim(adjustl(fmt_widthch))//".17"    
+        ifmt = "i"//trim(adjustl(fmt_widthch))
+        lfmt = "l"//trim(adjustl(fmt_widthch))
+        chfmt = "a"//trim(adjustl(fmt_widthch))
+        cfmt = "2"//trim(adjustl(rfmt))
 
 
+        num_cols = this%n
+        len_cols = this%col_size
+        
+        call write_horiz()
+        !call write_blank()
 
+        if (this%with_headers) then
+            pfmt = "(a2,"//trim(adjustl(chfmt))//",a1)"
+            do j=1,num_cols
+                output_char = trim(adjustl(this%headers(j)))
+                write(io_unit,pfmt,iostat=io_err,advance='no') "| ", adjustr(output_char), " "
+            end do
+            write(io_unit,"(a1)",iostat=io_err) "|"
 
-! ~~~~ Column Constructor/Setter
+            !call write_blank
+            call write_horiz()
+        end if
+        do i=1,len_cols
+            do j=1,num_cols
+                select case (this%data_cols(j)%dtype)
+                    case (REAL)
+                        pfmt = "(a2,"//trim(adjustl(rfmt))//",a1)"
+                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getr(j,i), " "
+                    case (INTEGER)
+                        pfmt = "(a2,"//trim(adjustl(ifmt))//",a1)"
+                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%geti(j,i), " "
+                    case (LOGICAL)
+                        pfmt = "(a2,"//trim(adjustl(lfmt))//",a1)"
+                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getl(j,i), " "
+                    case (CHARACTER)
+                        pfmt = "(a2,"//trim(adjustl(chfmt))//",a1)"
+                        output_char = trim(adjustl(this%getch(j,i)))
+                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", adjustr(output_char), " "
+                    case (COMPLEX)
+                        error stop 'cannot print complex data type yet'
+                        pfmt = "(a2,"//trim(adjustl(cfmt))//",a1)"
+                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getc(j,i), " "
+                end select
+            end do
+            write(io_unit,"(a1)",iostat=io_err) "|"
+            !call write_horiz()
+        end do
+        call write_horiz()
+        
+    contains
 
-    subroutine col_constructor_real(this,dcol)
-        class(column),intent(inout) :: this
-        real(rk),dimension(:),intent(in) :: dcol
+        subroutine write_blank()
+            character(len=100) :: pfmt
+            integer :: i,k
 
-        this%dtype = REAL
-        this%n = size(dcol,dim=1)
-        allocate(this%rcol(this%n))
-        this%rcol = dcol
+            pfmt = "(a2,"//trim(adjustl(chfmt))//",a1)"
+            write(io_unit,pfmt,iostat=io_err,advance='no') "| ", (" ", k=1,fmt_widthi), " "
+            do i=2,num_cols
+                write(io_unit,pfmt,iostat=io_err,advance='no') "  ", (" ", k=1,fmt_widthi), " " 
+            end do
+            write(io_unit,"(a1)",iostat=io_err) "|"
 
-    end subroutine col_constructor_real
+        end subroutine write_blank
 
-    subroutine col_constructor_integer(this,dcol)
-        class(column),intent(inout) :: this
-        integer(ik),dimension(:),intent(in) :: dcol
+        subroutine write_horiz()
+            character(len=100) :: pfmt, line
+            integer :: i
 
-        this%dtype = INTEGER
-        this%n = size(dcol,dim=1)
-        allocate(this%icol(this%n))
-        this%icol = dcol
+            line = "-----------------------"
+            pfmt = "(a2,"//trim(adjustl(chfmt))//",a1)"
+            do i=1,num_cols
+                write(io_unit,pfmt,iostat=io_err,advance='no') "--", trim(adjustl(line)), "-" 
+            end do
+            write(io_unit,"(a1)",iostat=io_err) "-"
 
-    end subroutine col_constructor_integer
+        end subroutine
 
-    subroutine col_constructor_logical(this,dcol)
-        class(column),intent(inout) :: this
-        logical,dimension(:),intent(in) :: dcol
+    end subroutine df_write_unformatted
 
-        this%dtype = LOGICAL
-        this%n = size(dcol,dim=1)
-        allocate(this%lcol(this%n))
-        this%lcol = dcol
 
-    end subroutine col_constructor_logical
 
-    subroutine col_constructor_character(this,dcol)
-        class(column),intent(inout) :: this
-        character(len=*),dimension(:),intent(in) :: dcol
 
-        integer :: elem_len
 
-        this%n = size(dcol,dim=1)
-        elem_len = len(dcol(1))
 
-        this%dtype = CHARACTER
-        allocate(character(elem_len) :: this%charcol(this%n))
-        this%charcol = dcol
 
-    end subroutine col_constructor_character
 
-    subroutine col_constructor_complex(this,dcol)
-        class(column),intent(inout) :: this
-        complex(rk),dimension(:),intent(in) :: dcol
 
-        this%dtype = COMPLEX
-        this%n = size(dcol,dim=1)
-        allocate(this%ccol(this%n))
-        this%ccol = dcol
 
-    end subroutine col_constructor_complex
 
 
-! ~~~~ Column Destructor
 
-    subroutine col_destructor(this)
-        class(column),intent(inout) :: this
 
-        if (allocated(this%rcol)) deallocate(this%rcol)
-        if (allocated(this%icol)) deallocate(this%icol)
-        if (allocated(this%lcol)) deallocate(this%lcol)
-        if (allocated(this%ccol)) deallocate(this%ccol)
-        if (allocated(this%charcol)) deallocate(this%charcol)
 
-    end subroutine col_destructor
 
-
-! ~~~~ Get Data Column from Column
-
-    pure function get_from_col_real(this) result(col)
-        class(column),intent(in) :: this
-        real(rk),dimension(this%n) :: col
-
-        if (this%dtype /= REAL) error stop 'column is not of type real'
-
-        col = this%rcol
-
-    end function get_from_col_real
-
-    pure function get_from_col_integer(this) result(col)
-        class(column),intent(in) :: this
-        integer(ik),dimension(this%n) :: col
-
-        if (this%dtype /= INTEGER) error stop 'column is not of type integer'
-
-        col = this%icol
-
-    end function get_from_col_integer
-
-    pure function get_from_col_logical(this) result(col)
-        class(column),intent(in) :: this
-        logical,dimension(this%n) :: col
-
-        if (this%dtype /= LOGICAL) error stop 'column is not of type logical'
-
-        col = this%lcol
-
-    end function get_from_col_logical
-
-    pure function get_from_col_character(this) result(col)
-        class(column),intent(in) :: this
-        character(len=:),dimension(:),allocatable :: col
-
-        integer :: arr_size, elem_len
-
-        if (this%dtype /= CHARACTER) error stop 'column is not of type character'
-
-        ! will cause segfault if col not char type
-        arr_size = size(this%charcol,dim=1)
-        elem_len = len(this%charcol(1))
-        allocate(character(elem_len) :: col(arr_size))
-
-        col = this%charcol
-
-    end function get_from_col_character
-
-    pure function get_from_col_complex(this) result(col)
-        class(column),intent(in) :: this
-        complex(rk),dimension(this%n) :: col
-
-        if (this%dtype /= COMPLEX) error stop 'column is not of type complex'
-
-        col = this%ccol
-
-    end function get_from_col_complex
-
-
-! ~~~~ Get Data Type Column
-
-    pure function get_from_col_dtype(this) result(dtype)
-        class(column),intent(in) :: this
-        integer :: dtype
-
-        dtype = this%dtype
-
-    end function get_from_col_dtype
-
-
-! ~~~~ Get Single Val Column
-
-    pure function get_single_col_real(this,i) result(val)
-        class(column),intent(in) :: this
-        integer,intent(in) :: i
-        real(rk) :: val
-
-        if (this%dtype /= REAL) error stop 'column is not of type real'
-
-        if (i > this%n) error stop 'out of bounds attempt on data column'
-
-        val = this%rcol(i)
-
-    end function get_single_col_real
-
-    pure function get_single_col_integer(this,i) result(val)
-        class(column),intent(in) :: this
-        integer,intent(in) :: i
-        integer(ik) :: val
-
-        if (this%dtype /= INTEGER) error stop 'column is not of type integer'
-
-        if (i > this%n) error stop 'out of bounds attempt on data column'
-
-        val = this%icol(i)
-
-    end function get_single_col_integer
-
-    pure function get_single_col_logical(this,i) result(val)
-        class(column),intent(in) :: this
-        integer,intent(in) :: i
-        logical :: val
-
-        if (this%dtype /= LOGICAL) error stop 'column is not of type logical'
-
-        if (i > this%n) error stop 'out of bounds attempt on data column'
-
-        val = this%lcol(i)
-
-    end function get_single_col_logical
-
-    pure function get_single_col_character(this,i) result(val)
-        class(column),intent(in) :: this
-        integer,intent(in) :: i
-        character(len=:),allocatable :: val
-
-        if (this%dtype /= CHARACTER) error stop 'column is not of type character'
-
-        if (i > this%n) error stop 'out of bounds attempt on data column'
-
-        val = this%charcol(i)
-
-    end function get_single_col_character
-
-    pure function get_single_col_complex(this,i) result(val)
-        class(column),intent(in) :: this
-        integer,intent(in) :: i
-        complex(rk) :: val
-
-        if (this%dtype /= COMPLEX) error stop 'column is not of type complex'
-
-        if (i > this%n) error stop 'out of bounds attempt on data column'
-
-        val = this%ccol(i)
-
-    end function get_single_col_complex
-
-
-! ~~~~ Change Single Val Column
-
-    subroutine change_col_real(this,i,val)
-        class(column),intent(inout) :: this
-        integer,intent(in) :: i
-        real(rk),intent(in) :: val
-
-        if (this%dtype /= REAL) error stop 'column is not of type real'
-
-        this%rcol(i) = val
-
-    end subroutine change_col_real
-
-    subroutine change_col_integer(this,i,val)
-        class(column),intent(inout) :: this
-        integer,intent(in) :: i
-        integer(ik),intent(in) :: val
-
-        if (this%dtype /= INTEGER) error stop 'column is not of type integer'
-
-        this%icol(i) = val
-
-    end subroutine change_col_integer
-
-    subroutine change_col_logical(this,i,val)
-        class(column),intent(inout) :: this
-        integer,intent(in) :: i
-        logical,intent(in) :: val
-
-        if (this%dtype /= LOGICAL) error stop 'column is not of type logical'
-
-        this%lcol(i) = val
-
-    end subroutine change_col_logical
-
-    subroutine change_col_character(this,i,val)
-        class(column),intent(inout) :: this
-        integer,intent(in) :: i
-        character(len=*),intent(in) :: val
-
-        if (this%dtype /= CHARACTER) error stop 'column is not of type character'
-
-        this%charcol(i) = val
-
-    end subroutine change_col_character
-
-    subroutine change_col_complex(this,i,val)
-        class(column),intent(inout) :: this
-        integer,intent(in) :: i
-        complex(rk),intent(in) :: val
-
-        if (this%dtype /= COMPLEX) error stop 'column is not of type complex'
-
-        this%ccol(i) = val
-
-    end subroutine change_col_complex
 
 
 
