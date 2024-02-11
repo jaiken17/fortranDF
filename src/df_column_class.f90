@@ -2,6 +2,10 @@ module df_column_class
     use df_precision
     implicit none
 
+    private
+
+    public :: column
+
     integer,parameter,public :: INTEGER = 1,       &
                                 REAL = 2,          &
                                 LOGICAL = 3,       &
