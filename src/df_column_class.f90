@@ -8,7 +8,7 @@ module df_column_class
                                 CHARACTER = 4,     &
                                 COMPLEX = 5
 
-
+    integer,parameter :: MAX_CHAR_LEN_DEFAULT = 100
 
 
 ! ~~~~~ COLUMN TYPE ~~~~~
@@ -16,16 +16,30 @@ module df_column_class
     type :: column
         private
         
-        integer,public :: dtype, n
+        integer,public :: dtype = 0 ! no type
+        integer,public :: n ! elements in column
+
+        ! arrays to hold data
+        ! only one (associated with dtype) will ever be allocated
         real(rk),dimension(:),allocatable :: rcol
         integer(ik),dimension(:),allocatable :: icol
         logical,dimension(:),allocatable :: lcol
         character(len=:),dimension(:),allocatable :: charcol
         complex(rk),dimension(:),allocatable :: ccol
+
+        logical :: initialized = .false.
     
     contains
         private
 
+        ! empty constructors
+        procedure,public :: emptyr => col_constructor_alloc_real
+        procedure,public :: emptyi => col_constructor_alloc_integer
+        procedure,public :: emptyl => col_constructor_alloc_logical
+        procedure,public :: emptych => col_constructor_alloc_character
+        procedure,public :: emptyc => col_constructor_alloc_complex
+        
+        ! constructor/setter combo
         procedure :: col_constructor_real,       &
                      col_constructor_integer,    &
                      col_constructor_logical,    &
@@ -36,10 +50,13 @@ module df_column_class
                                  col_constructor_logical,    &
                                  col_constructor_character,  &
                                  col_constructor_complex
+        ! destructor
         procedure,public :: destroy => col_destructor
 
+        ! get data type
         procedure,public :: get_type => get_from_col_dtype
 
+        ! get either whole column as array or single value
         procedure :: get_from_col_real,         &
                      get_from_col_integer,      &
                      get_from_col_logical,      &
@@ -56,6 +73,7 @@ module df_column_class
         generic,public :: getch => get_from_col_character, get_single_col_character
         generic,public :: getc => get_from_col_complex, get_single_col_complex
         
+        ! Give element new value (setter)
         procedure,public :: changer => change_col_real
         procedure,public :: changei => change_col_integer
         procedure,public :: changel => change_col_logical
@@ -67,22 +85,29 @@ module df_column_class
 
 contains
 
-    ! ~~~~ Column Constructor/Setter
+! ~~~~ Column Constructor/Setter
 
     subroutine col_constructor_real(this,dcol)
         class(column),intent(inout) :: this
         real(rk),dimension(:),intent(in) :: dcol
+
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
 
         this%dtype = REAL
         this%n = size(dcol,dim=1)
         allocate(this%rcol(this%n))
         this%rcol = dcol
 
+
     end subroutine col_constructor_real
 
     subroutine col_constructor_integer(this,dcol)
         class(column),intent(inout) :: this
         integer(ik),dimension(:),intent(in) :: dcol
+
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
 
         this%dtype = INTEGER
         this%n = size(dcol,dim=1)
@@ -95,6 +120,9 @@ contains
         class(column),intent(inout) :: this
         logical,dimension(:),intent(in) :: dcol
 
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
+        
         this%dtype = LOGICAL
         this%n = size(dcol,dim=1)
         allocate(this%lcol(this%n))
@@ -107,6 +135,9 @@ contains
         character(len=*),dimension(:),intent(in) :: dcol
 
         integer :: elem_len
+
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
 
         this%n = size(dcol,dim=1)
         elem_len = len(dcol(1))
@@ -121,6 +152,9 @@ contains
         class(column),intent(inout) :: this
         complex(rk),dimension(:),intent(in) :: dcol
 
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
+
         this%dtype = COMPLEX
         this%n = size(dcol,dim=1)
         allocate(this%ccol(this%n))
@@ -129,7 +163,84 @@ contains
     end subroutine col_constructor_complex
 
 
-    ! ~~~~ Column Destructor
+! ~~~~ Column Constructor but only allocate
+
+    subroutine col_constructor_alloc_real(this,n)
+        class(column),intent(inout) :: this
+        integer,intent(in) :: n
+
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
+
+        this%dtype = REAL
+        this%n = n
+        allocate(this%rcol(n))
+
+    end subroutine col_constructor_alloc_real
+
+    subroutine col_constructor_alloc_integer(this,n)
+        class(column),intent(inout) :: this
+        integer,intent(in) :: n
+
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
+
+        this%dtype = INTEGER
+        this%n = n
+        allocate(this%icol(n))
+        
+    end subroutine col_constructor_alloc_integer
+
+    subroutine col_constructor_alloc_logical(this,n)
+        class(column),intent(inout) :: this
+        integer,intent(in) :: n
+
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
+
+        this%dtype = LOGICAL
+        this%n = n
+        allocate(this%lcol(n))
+        
+    end subroutine col_constructor_alloc_logical
+
+    subroutine col_constructor_alloc_character(this,n,len)
+        class(column),intent(inout) :: this
+        integer,intent(in) :: n
+        integer,intent(in),optional :: len
+
+        integer :: char_len
+
+        if (present(len)) then
+            char_len = len
+        else
+            char_len = MAX_CHAR_LEN_DEFAULT
+        end if
+
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
+
+        this%dtype = CHARACTER
+        this%n = n
+        allocate(character(len=char_len) :: this%charcol(n))
+        
+    end subroutine col_constructor_alloc_character
+
+    subroutine col_constructor_alloc_complex(this,n)
+        class(column),intent(inout) :: this
+        integer,intent(in) :: n
+
+        if (this%initialized) error stop 'column object is already initialize'
+        this%initialized = .true.
+
+        this%dtype = COMPLEX
+        this%n = n
+        allocate(this%ccol(n))
+        
+    end subroutine col_constructor_alloc_complex
+
+
+! ~~~~ Column Destructor
 
     subroutine col_destructor(this)
         class(column),intent(inout) :: this
@@ -143,7 +254,7 @@ contains
     end subroutine col_destructor
 
 
-    ! ~~~~ Get Data Column from Column
+! ~~~~ Get Data Column from Column
 
     pure function get_from_col_real(this) result(col)
         class(column),intent(in) :: this
@@ -203,7 +314,7 @@ contains
     end function get_from_col_complex
 
 
-    ! ~~~~ Get Data Type Column
+! ~~~~ Get Data Type Column
 
     pure function get_from_col_dtype(this) result(dtype)
         class(column),intent(in) :: this
@@ -214,7 +325,7 @@ contains
     end function get_from_col_dtype
 
 
-    ! ~~~~ Get Single Val Column
+! ~~~~ Get Single Val Column
 
     pure function get_single_col_real(this,i) result(val)
         class(column),intent(in) :: this
@@ -282,7 +393,7 @@ contains
     end function get_single_col_complex
 
 
-    ! ~~~~ Change Single Val Column
+! ~~~~ Change Single Val Column
 
     subroutine change_col_real(this,i,val)
         class(column),intent(inout) :: this
