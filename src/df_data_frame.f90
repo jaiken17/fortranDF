@@ -2,6 +2,7 @@ module df_data_frame
     use,intrinsic :: iso_fortran_env, only: STD_OUT => output_unit
     use df_precision
     use df_column_class
+    use df_utils
     implicit none
     private
 
@@ -22,11 +23,17 @@ module df_data_frame
         character(len=:),dimension(:),allocatable :: headers
         type(column),dimension(:),allocatable :: data_cols 
 
+        logical :: initialized = .false.
+
     contains
         private
 
         procedure,public :: new => df_constructor
         procedure,public :: destroy => df_destructor
+
+        procedure,public :: ncols => df_get_num_cols
+        procedure,public :: nrows => df_get_num_rows
+
         procedure :: already_header
         procedure :: add_col_real,      &
                      add_col_integer,   &
@@ -42,6 +49,11 @@ module df_data_frame
                      df_get_val_logical,    &
                      df_get_val_character,  &
                      df_get_val_complex
+        procedure :: df_get_val_header_real,       &
+                     df_get_val_header_integer,    &
+                     df_get_val_header_logical,    &
+                     df_get_val_header_character,  &
+                     df_get_val_header_complex
         procedure :: df_get_col_ind_real,       &
                      df_get_col_ind_integer,    &
                      df_get_col_ind_logical,    &
@@ -53,13 +65,48 @@ module df_data_frame
                      df_get_col_header_character,   &
                      df_get_col_header_complex
 
-        generic,public :: getr => df_get_val_real, df_get_col_ind_real, df_get_col_header_real
-        generic,public :: geti => df_get_val_integer, df_get_col_ind_integer, df_get_col_header_integer
-        generic,public :: getl => df_get_val_logical, df_get_col_ind_logical, df_get_col_header_logical
-        generic,public :: getch => df_get_val_character, df_get_col_ind_character, df_get_col_header_character
-        generic,public :: getc => df_get_val_complex, df_get_col_ind_complex, df_get_col_header_complex
+        generic,public :: getr => df_get_val_real, df_get_val_header_real,              &
+                                  df_get_col_ind_real, df_get_col_header_real
+        generic,public :: geti => df_get_val_integer, df_get_val_header_integer,        &
+                                  df_get_col_ind_integer, df_get_col_header_integer
+        generic,public :: getl => df_get_val_logical, df_get_val_header_logical,        &
+                                  df_get_col_ind_logical, df_get_col_header_logical
+        generic,public :: getch => df_get_val_character, df_get_val_header_character,   &
+                                   df_get_col_ind_character, df_get_col_header_character
+        generic,public :: getc => df_get_val_complex, df_get_val_header_complex,        &
+                                  df_get_col_ind_complex, df_get_col_header_complex
 
+        procedure :: df_change_single_indices_real,         &
+                     df_change_single_indices_integer,      &
+                     df_change_single_indices_logical,      &
+                     df_change_single_indices_character,    &
+                     df_change_single_indices_complex
+        procedure :: df_change_single_header_real,         &
+                     df_change_single_header_integer,      &
+                     df_change_single_header_logical,      &
+                     df_change_single_header_character,    &
+                     df_change_single_header_complex
+        procedure :: df_change_col_index_real,      &
+                     df_change_col_index_integer,   &
+                     df_change_col_index_logical,   &
+                     df_change_col_index_character, &
+                     df_change_col_index_complex
+        procedure :: df_change_col_header_real,         &
+                     df_change_col_header_integer,      &
+                     df_change_col_header_logical,      &
+                     df_change_col_header_character,    &
+                     df_change_col_header_complex
 
+        generic,public :: setr => df_change_single_header_real, df_change_single_indices_real,              &
+                                  df_change_col_index_real, df_change_col_header_real
+        generic,public :: seti => df_change_single_header_integer, df_change_single_indices_integer,        &
+                                  df_change_col_index_integer, df_change_col_header_integer
+        generic,public :: setl => df_change_single_header_logical, df_change_single_indices_logical,        &
+                                  df_change_col_index_logical, df_change_col_header_logical
+        generic,public :: setch => df_change_single_header_character, df_change_single_indices_character,   &
+                                   df_change_col_index_character, df_change_col_header_character
+        generic,public :: setc => df_change_single_header_complex, df_change_single_indices_complex,        &
+                                  df_change_col_index_complex, df_change_col_header_complex
 
         procedure :: df_write_unformatted
         generic,public :: write => df_write_unformatted
@@ -75,6 +122,9 @@ contains
     subroutine df_constructor(this,char_len)
         class(data_frame),intent(inout) :: this
         integer,intent(in),optional :: char_len
+
+        if (this%initialized) call this%destroy()
+        this%initialized = .true.
 
         if (present(char_len)) then
             this%max_char_len = char_len
@@ -103,7 +153,29 @@ contains
 
         if (allocated(this%headers)) deallocate(this%headers)
 
+        this%initialized = .false.
+
     end subroutine df_destructor
+
+
+! ~~~~ DF Inquiry functions
+
+    pure function df_get_num_cols(this) result(n)
+        class(data_frame),intent(in) :: this
+        integer :: n
+
+        n = this%n
+
+    end function df_get_num_cols
+
+    pure function df_get_num_rows(this) result(num_rows)
+        class(data_frame),intent(in) :: this
+        integer :: num_rows
+
+        num_rows = this%col_size
+
+    end function df_get_num_rows
+
 
 
 ! ~~~~ Add Column to DF
@@ -116,6 +188,8 @@ contains
         type(column),dimension(:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
+
+        if (.not. this%initialized) call this%new()
 
         if (this%col_size < 0) then
             this%col_size = size(col,dim=1)
@@ -167,6 +241,8 @@ contains
         character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
+        if (.not. this%initialized) call this%new()
+
         if (this%col_size < 0) then
             this%col_size = size(col,dim=1)
         else if (this%col_size /= size(col,dim=1)) then
@@ -216,6 +292,8 @@ contains
         type(column),dimension(:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
+
+        if (.not. this%initialized) call this%new()
 
         if (this%col_size < 0) then
             this%col_size = size(col,dim=1)
@@ -267,6 +345,8 @@ contains
         character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
+        if (.not. this%initialized) call this%new()
+
         if (this%col_size < 0) then
             this%col_size = size(col,dim=1)
         else if (this%col_size /= size(col,dim=1)) then
@@ -317,6 +397,8 @@ contains
         character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
+        if (.not. this%initialized) call this%new()
+
         if (this%col_size < 0) then
             this%col_size = size(col,dim=1)
         else if (this%col_size /= size(col,dim=1)) then
@@ -357,6 +439,9 @@ contains
         end if
 
     end subroutine add_col_complex
+
+
+! ~~~~ Check if header is not unique
 
     pure function already_header(this, header)
         class(data_frame),intent(in) :: this
@@ -569,6 +654,410 @@ contains
     end function df_get_val_complex
 
 
+! ~~~~ Get single value from header
+
+    pure function df_get_val_header_real(this,header,j) result(val)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        real(rk) :: val
+
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        val = this%data_cols(ind)%getr(j)
+
+    end function df_get_val_header_real
+
+    pure function df_get_val_header_integer(this,header,j) result(val)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        integer(ik) :: val
+
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        val = this%data_cols(ind)%geti(j)
+
+    end function df_get_val_header_integer
+
+    pure function df_get_val_header_logical(this,header,j) result(val)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        logical :: val
+
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        val = this%data_cols(ind)%getl(j)
+
+    end function df_get_val_header_logical
+
+    pure function df_get_val_header_character(this,header,j) result(val)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        character(len=:),allocatable :: val
+
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        val = this%data_cols(ind)%getch(j)
+
+    end function df_get_val_header_character
+
+    pure function df_get_val_header_complex(this,header,j) result(val)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        complex(rk) :: val
+
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        val = this%data_cols(ind)%getc(j)
+
+    end function df_get_val_header_complex
+
+
+! ~~~~ Change single value of data frame -> two indices
+
+    subroutine df_change_single_indices_real(this,i,j,val)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i,j
+        real(rk),intent(in) :: val
+
+        call this%data_cols(i)%changer(j,val)
+
+    end subroutine df_change_single_indices_real
+
+    subroutine df_change_single_indices_integer(this,i,j,val)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i,j
+        integer(ik),intent(in) :: val
+
+        call this%data_cols(i)%changei(j,val)
+
+    end subroutine df_change_single_indices_integer
+
+    subroutine df_change_single_indices_logical(this,i,j,val)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i,j
+        logical,intent(in) :: val
+
+        call this%data_cols(i)%changel(j,val)
+
+    end subroutine df_change_single_indices_logical
+
+    subroutine df_change_single_indices_character(this,i,j,val)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i,j
+        character(len=*),intent(in) :: val
+
+        call this%data_cols(i)%changech(j,val)
+
+    end subroutine df_change_single_indices_character
+
+    subroutine df_change_single_indices_complex(this,i,j,val)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i,j
+        complex(rk),intent(in) :: val
+
+        call this%data_cols(i)%changec(j,val)
+
+    end subroutine df_change_single_indices_complex
+
+
+! ~~~~ Change single value of data frame -> header 
+
+    subroutine df_change_single_header_real(this,header,j,val)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        real(rk),intent(in) :: val
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%changer(j,val)
+
+    end subroutine df_change_single_header_real
+
+    subroutine df_change_single_header_integer(this,header,j,val)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        integer(ik),intent(in) :: val
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%changei(j,val)
+
+    end subroutine df_change_single_header_integer
+
+    subroutine df_change_single_header_logical(this,header,j,val)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        logical,intent(in) :: val
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%changel(j,val)
+
+    end subroutine df_change_single_header_logical
+
+    subroutine df_change_single_header_character(this,header,j,val)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        character(len=*),intent(in) :: val
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%changech(j,val)
+
+    end subroutine df_change_single_header_character
+
+    subroutine df_change_single_header_complex(this,header,j,val)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        integer,intent(in) :: j
+        complex(rk),intent(in) :: val
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%changec(j,val)
+
+    end subroutine df_change_single_header_complex
+
+
+! ~~~~ Change col of data frame with index
+
+    subroutine df_change_col_index_real(this,i,col)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i
+        real(rk),dimension(this%col_size) :: col
+
+        call this%data_cols(i)%new(col)
+
+    end subroutine df_change_col_index_real
+
+    subroutine df_change_col_index_integer(this,i,col)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i
+        integer(ik),dimension(this%col_size) :: col
+
+        call this%data_cols(i)%new(col)
+
+    end subroutine df_change_col_index_integer
+
+    subroutine df_change_col_index_logical(this,i,col)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i
+        logical,dimension(this%col_size) :: col
+
+        call this%data_cols(i)%new(col)
+
+    end subroutine df_change_col_index_logical
+
+    subroutine df_change_col_index_character(this,i,col)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i
+        character(len=*),dimension(:),allocatable :: col
+
+        if (size(col,dim=1) > this%col_size) error stop 'Different size columns in add col to data_frame'
+
+        call this%data_cols(i)%new(col)
+
+    end subroutine df_change_col_index_character
+
+    subroutine df_change_col_index_complex(this,i,col)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: i
+        complex(rk),dimension(this%col_size) :: col
+
+        call this%data_cols(i)%new(col)
+
+    end subroutine df_change_col_index_complex
+
+
+! ~~~~ Change col of Data Frame with header
+
+    subroutine df_change_col_header_real(this,header,col)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        real(rk),dimension(this%n),intent(in) :: col
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%new(col)
+
+    end subroutine df_change_col_header_real
+
+    subroutine df_change_col_header_integer(this,header,col)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        integer(ik),dimension(this%n),intent(in) :: col
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%new(col)
+
+    end subroutine df_change_col_header_integer
+
+    subroutine df_change_col_header_logical(this,header,col)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        logical,dimension(this%n),intent(in) :: col
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%new(col)
+
+    end subroutine df_change_col_header_logical
+
+    subroutine df_change_col_header_character(this,header,col)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        character(len=*),dimension(:),intent(in) :: col
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        if (size(col,dim=1) > this%col_size) error stop 'Different size columns in add col to data_frame'
+
+        call this%data_cols(ind)%new(col)
+
+    end subroutine df_change_col_header_character
+
+    subroutine df_change_col_header_complex(this,header,col)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+        complex(rk),dimension(this%n),intent(in) :: col
+        
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        call this%data_cols(ind)%new(col)
+
+    end subroutine df_change_col_header_complex
+
+
 ! ~~~~ Write Data Frame
 
     subroutine df_write_unformatted(this,unit,iostat)
@@ -677,9 +1166,32 @@ contains
     end subroutine df_write_unformatted
 
 
+! ~~~~ Read Data Frame from File
+
+    subroutine df_read_df_file(this,filename,headers)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: filename
+        logical,intent(in) :: headers   ! optional?
+
+        integer :: unit, io_err, num_lines
+        character(len=:),allocatable :: err_msg
+
+        open(newunit=unit,file=trim(adjustl(filename)),status="old",action="read",iostat=io_err)
+        if (io_err /= 0) then
+            err_msg = err_msg_io_open//" "//trim(adjustl(filename))
+            error stop err_msg
+        end if
+
+        call get_num_lines(unit,num_lines)
+
+        ! TODO: get num headers
+        !       allocate num cols
+        !       allocate num rows (num_lines - 1) ! worry about last line being empty       
+        !       get headers
+        !       loop to read column data 1 row at a time
 
 
-
+    end subroutine df_read_df_file
 
 
 
