@@ -7,8 +7,10 @@ module df_utils
 
     public :: get_num_lines
 
-    character(len=16),parameter :: err_msg_io = "General IO error"
-    character(len=17),parameter :: err_msg_io_open = "IO error on open"
+    character(len=16),parameter,public :: err_msg_io_read = "IO error on read"
+    character(len=17),parameter,public :: err_msg_io_write = "IO error on write"
+    character(len=17),parameter,public :: err_msg_io_open = "IO error on open"
+    character(len=16),parameter,public :: err_msg_io = "General IO error"
 
     interface get_num_lines
         procedure :: get_num_lines_unit
