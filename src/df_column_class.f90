@@ -95,7 +95,7 @@ contains
         class(column),intent(inout) :: this
         real(rk),dimension(:),intent(in) :: dcol
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%dtype = REAL
@@ -110,7 +110,7 @@ contains
         class(column),intent(inout) :: this
         integer(ik),dimension(:),intent(in) :: dcol
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%dtype = INTEGER
@@ -124,7 +124,7 @@ contains
         class(column),intent(inout) :: this
         logical,dimension(:),intent(in) :: dcol
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
         
         this%dtype = LOGICAL
@@ -140,7 +140,7 @@ contains
 
         integer :: elem_len
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%n = size(dcol,dim=1)
@@ -156,7 +156,7 @@ contains
         class(column),intent(inout) :: this
         complex(rk),dimension(:),intent(in) :: dcol
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%dtype = COMPLEX
@@ -173,7 +173,7 @@ contains
         class(column),intent(inout) :: this
         integer,intent(in) :: n
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%dtype = REAL
@@ -186,7 +186,7 @@ contains
         class(column),intent(inout) :: this
         integer,intent(in) :: n
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%dtype = INTEGER
@@ -199,7 +199,7 @@ contains
         class(column),intent(inout) :: this
         integer,intent(in) :: n
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%dtype = LOGICAL
@@ -221,7 +221,7 @@ contains
             char_len = MAX_CHAR_LEN_DEFAULT
         end if
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%dtype = CHARACTER
@@ -234,7 +234,7 @@ contains
         class(column),intent(inout) :: this
         integer,intent(in) :: n
 
-        if (this%initialized) error stop 'column object is already initialize'
+        if (this%initialized) call this%destroy()
         this%initialized = .true.
 
         this%dtype = COMPLEX
