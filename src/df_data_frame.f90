@@ -153,6 +153,9 @@ contains
 
         if (allocated(this%headers)) deallocate(this%headers)
 
+        this%n = 0
+        this%col_size = -1
+
         this%initialized = .false.
 
     end subroutine df_destructor
@@ -513,7 +516,7 @@ contains
     pure function df_get_col_header_real(this,header) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        real(rk),dimension(this%n) :: col
+        real(rk),dimension(this%col_size) :: col
 
         integer :: ind
         character(len=:),allocatable :: trunc_header
@@ -532,7 +535,7 @@ contains
     pure function df_get_col_header_integer(this,header) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        integer(ik),dimension(this%n) :: col
+        integer(ik),dimension(this%col_size) :: col
 
         integer :: ind
         character(len=:),allocatable :: trunc_header
@@ -551,7 +554,7 @@ contains
     pure function df_get_col_header_logical(this,header) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        logical,dimension(this%n) :: col
+        logical,dimension(this%col_size) :: col
 
         integer :: ind
         character(len=:),allocatable :: trunc_header
@@ -589,7 +592,7 @@ contains
     pure function df_get_col_header_complex(this,header) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        complex(rk),dimension(this%n) :: col
+        complex(rk),dimension(this%col_size) :: col
 
         integer :: ind
         character(len=:),allocatable :: trunc_header
