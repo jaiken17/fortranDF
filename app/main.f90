@@ -27,7 +27,7 @@ program main
     call df%new()
     call df%append([.true.,.true.,.false.,.false.],"a")
     call df%append([.true.,.false.,.true.,.false.],"b")
-    call df%append([.true.,.false.,.false.,.false.],"a .and. b")
+    call df%append(df%getl("a") .and. df%getl("b"),"a .and. b")
 
     call df%write()
 
