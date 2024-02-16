@@ -1,8 +1,10 @@
 module df_data_frame
     use,intrinsic :: iso_fortran_env, only: STD_OUT => output_unit
     use df_precision
+    use df_types
     use df_column_class
     use df_utils
+    use split_mod
     implicit none
     private
 
@@ -42,6 +44,12 @@ module df_data_frame
                      add_col_complex
         generic,public :: append => add_col_real, add_col_integer, add_col_logical,    &
                                     add_col_character, add_col_complex
+        ! Public?
+        procedure :: append_emptyr => add_empty_col_real
+        procedure :: append_emptyi => add_empty_col_integer
+        procedure :: append_emptyl => add_empty_col_logical
+        procedure :: append_emptych => add_empty_col_character
+        procedure :: append_emptyc => add_empty_col_complex
 
         
         procedure :: df_get_val_real,       &
@@ -110,6 +118,9 @@ module df_data_frame
 
         procedure :: df_write_unformatted
         generic,public :: write => df_write_unformatted
+
+        procedure :: df_read_df_file
+        generic,public :: read => df_read_df_file
     end type data_frame
 
 
@@ -442,6 +453,273 @@ contains
         end if
 
     end subroutine add_col_complex
+
+! ~~~~ Add empty Col to DF
+
+    subroutine add_empty_col_real(this,col_size,header)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: col_size
+        character(len=*),intent(in),optional :: header
+
+        type(column),dimension(:),allocatable :: new_cols
+        character(len=:),dimension(:),allocatable :: new_headers
+        integer :: n
+
+
+        if (.not. this%initialized) call this%new()
+        
+        if (this%col_size < 0) then
+            this%col_size = col_size
+        else
+            if (this%col_size /= col_size) error stop "cannot allocate a column with a different size to rest of data frame"
+        end if
+
+        n = this%n
+        if (n > 0) then
+            this%n = n + 1
+            allocate(new_cols(n+1))
+            new_cols(1:n) = this%data_cols
+            call new_cols(n+1)%emptyr(this%col_size)
+            this%data_cols = new_cols
+            if (present(header)) then
+                if (this%with_headers) then
+                    if (this%already_header(header)) error stop 'all headers must be unique'
+                    allocate(character(this%max_char_len) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
+                else
+                    error stop 'attempt to add headers to data frame that does not have headers'
+                end if
+            else
+                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
+            end if
+        else
+            this%n = 1
+            allocate(this%data_cols(1))
+            call this%data_cols(1)%emptyr(this%col_size)
+            if (present(header)) then
+                allocate(character(this%max_char_len) :: this%headers(1))
+                this%headers(1) = header
+                this%with_headers = .true.
+            else
+                this%with_headers = .false.
+            end if
+        end if
+
+    end subroutine add_empty_col_real
+
+    subroutine add_empty_col_integer(this,col_size,header)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: col_size
+        character(len=*),intent(in),optional :: header
+
+        type(column),dimension(:),allocatable :: new_cols
+        character(len=:),dimension(:),allocatable :: new_headers
+        integer :: n
+
+
+        if (.not. this%initialized) call this%new()
+        
+        if (this%col_size < 0) then
+            this%col_size = col_size
+        else
+            if (this%col_size /= col_size) error stop "cannot allocate a column with a different size to rest of data frame"
+        end if
+
+        n = this%n
+        if (n > 0) then
+            this%n = n + 1
+            allocate(new_cols(n+1))
+            new_cols(1:n) = this%data_cols
+            call new_cols(n+1)%emptyi(this%col_size)
+            this%data_cols = new_cols
+            if (present(header)) then
+                if (this%with_headers) then
+                    if (this%already_header(header)) error stop 'all headers must be unique'
+                    allocate(character(this%max_char_len) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
+                else
+                    error stop 'attempt to add headers to data frame that does not have headers'
+                end if
+            else
+                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
+            end if
+        else
+            this%n = 1
+            allocate(this%data_cols(1))
+            call this%data_cols(1)%emptyi(this%col_size)
+            if (present(header)) then
+                allocate(character(this%max_char_len) :: this%headers(1))
+                this%headers(1) = header
+                this%with_headers = .true.
+            else
+                this%with_headers = .false.
+            end if
+        end if
+
+    end subroutine add_empty_col_integer
+
+    subroutine add_empty_col_logical(this,col_size,header)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: col_size
+        character(len=*),intent(in),optional :: header
+
+        type(column),dimension(:),allocatable :: new_cols
+        character(len=:),dimension(:),allocatable :: new_headers
+        integer :: n
+
+
+        if (.not. this%initialized) call this%new()
+        
+        if (this%col_size < 0) then
+            this%col_size = col_size
+        else
+            if (this%col_size /= col_size) error stop "cannot allocate a column with a different size to rest of data frame"
+        end if
+
+        n = this%n
+        if (n > 0) then
+            this%n = n + 1
+            allocate(new_cols(n+1))
+            new_cols(1:n) = this%data_cols
+            call new_cols(n+1)%emptyl(this%col_size)
+            this%data_cols = new_cols
+            if (present(header)) then
+                if (this%with_headers) then
+                    if (this%already_header(header)) error stop 'all headers must be unique'
+                    allocate(character(this%max_char_len) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
+                else
+                    error stop 'attempt to add headers to data frame that does not have headers'
+                end if
+            else
+                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
+            end if
+        else
+            this%n = 1
+            allocate(this%data_cols(1))
+            call this%data_cols(1)%emptyl(this%col_size)
+            if (present(header)) then
+                allocate(character(this%max_char_len) :: this%headers(1))
+                this%headers(1) = header
+                this%with_headers = .true.
+            else
+                this%with_headers = .false.
+            end if
+        end if
+
+    end subroutine add_empty_col_logical
+
+    subroutine add_empty_col_character(this,col_size,header)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: col_size
+        character(len=*),intent(in),optional :: header
+
+        type(column),dimension(:),allocatable :: new_cols
+        character(len=:),dimension(:),allocatable :: new_headers
+        integer :: n
+
+
+        if (.not. this%initialized) call this%new()
+        
+        if (this%col_size < 0) then
+            this%col_size = col_size
+        else
+            if (this%col_size /= col_size) error stop "cannot allocate a column with a different size to rest of data frame"
+        end if
+
+        n = this%n
+        if (n > 0) then
+            this%n = n + 1
+            allocate(new_cols(n+1))
+            new_cols(1:n) = this%data_cols
+            call new_cols(n+1)%emptych(this%col_size)
+            this%data_cols = new_cols
+            if (present(header)) then
+                if (this%with_headers) then
+                    if (this%already_header(header)) error stop 'all headers must be unique'
+                    allocate(character(this%max_char_len) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
+                else
+                    error stop 'attempt to add headers to data frame that does not have headers'
+                end if
+            else
+                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
+            end if
+        else
+            this%n = 1
+            allocate(this%data_cols(1))
+            call this%data_cols(1)%emptych(this%col_size)
+            if (present(header)) then
+                allocate(character(this%max_char_len) :: this%headers(1))
+                this%headers(1) = header
+                this%with_headers = .true.
+            else
+                this%with_headers = .false.
+            end if
+        end if
+
+    end subroutine add_empty_col_character
+
+    subroutine add_empty_col_complex(this,col_size,header)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: col_size
+        character(len=*),intent(in),optional :: header
+
+        type(column),dimension(:),allocatable :: new_cols
+        character(len=:),dimension(:),allocatable :: new_headers
+        integer :: n
+
+
+        if (.not. this%initialized) call this%new()
+        
+        if (this%col_size < 0) then
+            this%col_size = col_size
+        else
+            if (this%col_size /= col_size) error stop "cannot allocate a column with a different size to rest of data frame"
+        end if
+
+        n = this%n
+        if (n > 0) then
+            this%n = n + 1
+            allocate(new_cols(n+1))
+            new_cols(1:n) = this%data_cols
+            call new_cols(n+1)%emptyc(this%col_size)
+            this%data_cols = new_cols
+            if (present(header)) then
+                if (this%with_headers) then
+                    if (this%already_header(header)) error stop 'all headers must be unique'
+                    allocate(character(this%max_char_len) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
+                else
+                    error stop 'attempt to add headers to data frame that does not have headers'
+                end if
+            else
+                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
+            end if
+        else
+            this%n = 1
+            allocate(this%data_cols(1))
+            call this%data_cols(1)%emptyc(this%col_size)
+            if (present(header)) then
+                allocate(character(this%max_char_len) :: this%headers(1))
+                this%headers(1) = header
+                this%with_headers = .true.
+            else
+                this%with_headers = .false.
+            end if
+        end if
+
+    end subroutine add_empty_col_complex
 
 
 ! ~~~~ Check if header is not unique
@@ -1171,13 +1449,19 @@ contains
 
 ! ~~~~ Read Data Frame from File
 
-    subroutine df_read_df_file(this,filename,headers)
+    subroutine df_read_df_file(this,filename,has_headers)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: filename
-        logical,intent(in) :: headers   ! optional?
+        logical,intent(in) :: has_headers
 
-        integer :: unit, io_err, num_lines
+        integer :: io_err
         character(len=:),allocatable :: err_msg
+
+        integer :: unit, num_lines, num_cols, line_len
+        character(len=:),allocatable :: line
+        character(len=:),dimension(:),allocatable :: headers
+
+        integer :: i
 
         open(newunit=unit,file=trim(adjustl(filename)),status="old",action="read",iostat=io_err)
         if (io_err /= 0) then
@@ -1186,7 +1470,18 @@ contains
         end if
 
         call get_num_lines(unit,num_lines)
+        call get_num_cols(unit,num_cols,line_len)   !returns num columns and how many chars a line is
 
+
+        allocate(character(len=line_len) :: line)
+        read(unit=unit,fmt='(a)',iostat=io_err) line
+        headers = split(line)
+
+        do i=1,len(headers)
+            
+        end do
+
+        
         ! TODO: get num headers
         !       allocate num cols
         !       allocate num rows (num_lines - 1) ! worry about last line being empty       
@@ -1195,6 +1490,23 @@ contains
 
 
     end subroutine df_read_df_file
+
+
+    subroutine get_num_cols(unit,num_cols,line_len)
+        integer,intent(in) :: unit
+        integer,intent(out) :: num_cols
+        integer,intent(out) :: line_len
+
+        character(len=:),allocatable :: line
+        character(len=:),dimension(:),allocatable :: line_split
+
+        call get_len_line(unit,line_len,line)
+        line_split = split(line," ")
+        num_cols = size(line_split,dim=1)
+
+        rewind(unit)
+
+    end subroutine get_num_cols
 
 
 

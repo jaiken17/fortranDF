@@ -5,6 +5,8 @@ program main
 
     type(data_frame) :: df
 
+    call chdir("app")
+
     call df%new()
     call df%append([1,2,3,4],"index")
     call df%append([3.0_rk, 2.0_rk, 7.d-6, 5.0_rk],"value")
@@ -31,6 +33,8 @@ program main
 
     call df%write()
 
-
+    call df%destroy()
+    call df%new()
+    call df%read("test_file.txt",.true.)
 
 end program main
