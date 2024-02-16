@@ -1,16 +1,12 @@
 module df_column_class
     use df_precision
+    use df_types
     implicit none
 
     private
 
     public :: column
 
-    integer,parameter,public :: INTEGER = 1,       &
-                                REAL = 2,          &
-                                LOGICAL = 3,       &
-                                CHARACTER = 4,     &
-                                COMPLEX = 5
 
     integer,parameter :: MAX_CHAR_LEN_DEFAULT = 100
 
@@ -49,10 +45,10 @@ module df_column_class
                      col_constructor_logical,    &
                      col_constructor_character,  &
                      col_constructor_complex
-        generic,public :: new => col_constructor_real,       &
-                                 col_constructor_integer,    &
-                                 col_constructor_logical,    &
-                                 col_constructor_character,  &
+        generic,public :: new => col_constructor_real,          &
+                                 col_constructor_integer,       &
+                                 col_constructor_logical,       &
+                                 col_constructor_character,     &
                                  col_constructor_complex
         ! destructor
         procedure,public :: destroy => col_destructor
