@@ -1,11 +1,12 @@
 program main
+    use df_utils
     use df_precision
     use df_data_frame
     implicit none
 
     type(data_frame) :: df
 
-    call chdir("app")
+    call posix_chdir("app")
 
     call df%new()
     call df%append([1,2,3,4],"index")

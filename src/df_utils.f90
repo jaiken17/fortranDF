@@ -6,7 +6,7 @@ module df_utils
 
     private
 
-    public :: get_num_lines, get_len_line, what_type
+    public :: get_num_lines, get_len_line, what_type, posix_chdir
 
     character(len=16),parameter,public :: err_msg_io_read = "IO error on read"
     character(len=17),parameter,public :: err_msg_io_write = "IO error on write"
@@ -24,7 +24,26 @@ module df_utils
         procedure :: get_length_of_line_filename
     end interface get_len_line
 
+    interface
+        function c_chdir(path) bind(C,name="chdir")
+        use iso_c_binding
+        integer(C_INT) :: c_chdir
+        character(C_CHAR) :: path(*)
+        end function
+    end interface
+
 contains
+
+    subroutine posix_chdir(path, err)
+        use iso_c_binding
+        character(*) :: path
+        integer, optional, intent(out) :: err
+        integer :: loc_err
+
+        loc_err =  c_chdir(path//c_null_char)
+
+        if (present(err)) err = loc_err
+    end subroutine posix_chdir
 
     subroutine get_num_lines_unit(unit,num_lines)
         ! Gets number of lines left in file open with unit. If total number of lines
@@ -290,7 +309,7 @@ contains
             dtype = CHARACTER
         end if
 
-    end function
+    end function what_type
 
 
 
