@@ -1407,7 +1407,7 @@ contains
         fmt_widthi = 23
         allocate(character(fmt_widthi) :: output_char)
         write(fmt_widthch,"(i10)") fmt_widthi
-        rfmt = "ES"//trim(adjustl(fmt_widthch))//".17"    
+        rfmt = "ES"//trim(adjustl(fmt_widthch))//".16"    
         ifmt = "i"//trim(adjustl(fmt_widthch))
         lfmt = "l"//trim(adjustl(fmt_widthch))
         chfmt = "a"//trim(adjustl(fmt_widthch))
@@ -1520,13 +1520,13 @@ contains
         call get_num_cols(unit,num_cols,line_len)   !returns num columns and how many chars a line is
 
 
-        allocate(character(len=line_len) :: line)
+        allocate(character(len=line_len+100) :: line)
         read(unit=unit,fmt='(a)',iostat=io_err) line
         if (io_err /= 0) then
             err_msg = err_msg_io_read//" "//trim(adjustl(filename))
             error stop err_msg
         end if
-        split_line = split(line)
+        split_line = split(line," ")
 
         if (has_headers) then
             headers = split_line
@@ -1535,7 +1535,7 @@ contains
                 err_msg = err_msg_io_read//" "//trim(adjustl(filename))
                 error stop err_msg
             end if
-            split_line = line
+            split_line = split(line," ")
             do i=1,num_cols
                 dtype = what_type(split_line(i))
                 select case (dtype)
@@ -1567,22 +1567,22 @@ contains
                 dtype = what_type(split_line(i))
                 select case (dtype)
                     case (REAL)
-                        call this%append_emptyr(num_lines-1)
+                        call this%append_emptyr(num_lines)
                         read(split_line(i),fmt=*) rval
                         call this%setr(i,1,rval)
                     case (INTEGER)
-                        call this%append_emptyi(num_lines-1)
+                        call this%append_emptyi(num_lines)
                         read(split_line(i),fmt=*) ival
                         call this%seti(i,1,ival)
                     case (LOGICAL)
-                        call this%append_emptyl(num_lines-1)
+                        call this%append_emptyl(num_lines)
                         read(split_line(i),fmt=*) lval
                         call this%setl(i,1,lval)
                     case (CHARACTER)
-                        call this%append_emptych(num_lines-1)
+                        call this%append_emptych(num_lines)
                         call this%setch(i,1,split_line(i))
                     case (COMPLEX)
-                        call this%append_emptyc(num_lines-1)
+                        call this%append_emptyc(num_lines)
                         read(split_line(i),fmt=*) cval
                         call this%setc(i,1,cval)
                 end select
@@ -1598,8 +1598,10 @@ contains
                 err_msg = err_msg_io_read//" "//trim(adjustl(filename))
                 error stop err_msg
             end if
-            split_line = line
+            split_line = split(line," ")
             do i=1,num_cols
+                print*, line_ind,i
+                print*, split_line(i)
                 select case (this%data_cols(i)%dtype)
                 case (REAL)
                     read(split_line(i),fmt=*) rval
