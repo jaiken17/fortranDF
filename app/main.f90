@@ -37,5 +37,7 @@ program main
     call df%destroy()
     call df%new()
     call df%read("test_file.txt",.true.)
+    call df%write()
+    print*, df%dtype("header2")
 
 end program main
