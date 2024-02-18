@@ -19,7 +19,7 @@ module df_data_frame
 
     type :: data_frame
         private
-
+        
         integer :: n, col_size, max_char_len
         logical :: with_headers
         character(len=:),dimension(:),allocatable :: headers
@@ -35,6 +35,9 @@ module df_data_frame
 
         procedure,public :: ncols => df_get_num_cols
         procedure,public :: nrows => df_get_num_rows
+
+        procedure :: df_get_col_type_header, df_get_col_type_index
+        generic,public :: dtype => df_get_col_type_header, df_get_col_type_index
 
         procedure :: already_header
         procedure :: add_col_real,      &
@@ -189,6 +192,34 @@ contains
         num_rows = this%col_size
 
     end function df_get_num_rows
+
+    pure function df_get_col_type_header(this,header) result(dtype)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: header
+        integer :: dtype
+
+        integer :: ind
+        character(len=:),allocatable :: trunc_header
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(character(len(this%headers(1))) :: trunc_header)
+        trunc_header = trim(adjustl(header))
+        ind = findloc(this%headers,trunc_header,dim=1)
+        if (ind < 1) error stop 'header not present in data frame'
+
+        dtype = this%data_cols(ind)%dtype
+
+    end function df_get_col_type_header
+
+    pure function df_get_col_type_index(this,j) result(dtype)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: j
+        integer :: dtype
+
+        dtype = this%data_cols(j)%dtype
+
+    end function df_get_col_type_index
 
 
 
@@ -1561,7 +1592,7 @@ contains
         end if
 
         line_ind = line_ind + 1
-        do while(line_ind < num_lines)
+        do while(line_ind <= num_lines)
             read(unit=unit,fmt='(a)',iostat=io_err) line
             if (io_err /= 0) then
                 err_msg = err_msg_io_read//" "//trim(adjustl(filename))
@@ -1586,15 +1617,8 @@ contains
                     call this%setc(i,line_ind+offset,cval)
             end select
             end do
+            line_ind = line_ind + 1
         end do
-
-        
-        ! TODO: get num headers
-        !       allocate num cols
-        !       allocate num rows (num_lines - 1) ! worry about last line being empty       
-        !       get headers
-        !       loop to read column data 1 row at a time
-
 
     end subroutine df_read_df_file
 
