@@ -1,0 +1,8 @@
+# Recipe file for FPM
+# This is needed to compile when default gfortran is gfortran-10+
+@run 
+option run --compiler gfortran-9
+@test 
+option test --compiler gfortran-9
+@build
+option build --compiler gfortran-9
