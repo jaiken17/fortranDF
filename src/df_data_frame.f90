@@ -231,7 +231,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
         if (.not. this%initialized) call this%new()
@@ -252,11 +252,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -284,7 +283,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
         if (.not. this%initialized) call this%new()
@@ -305,11 +304,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -337,7 +335,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
         if (.not. this%initialized) call this%new()
@@ -358,11 +356,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -390,7 +387,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
         if (.not. this%initialized) call this%new()
@@ -411,11 +408,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -443,7 +439,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
         if (.not. this%initialized) call this%new()
@@ -464,11 +460,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -498,7 +493,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
 
@@ -520,11 +515,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -552,7 +546,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
 
@@ -574,11 +568,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -606,7 +599,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
 
@@ -628,11 +621,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -660,7 +652,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
 
@@ -682,11 +674,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -714,7 +705,7 @@ contains
         character(len=*),intent(in),optional :: header
 
         type(column),dimension(:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: old_headers
+        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n
 
 
@@ -736,11 +727,10 @@ contains
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
-                    old_headers = this%headers
-                    deallocate(this%headers)
-                    allocate(character(this%max_char_len) :: this%headers(n+1))
-                    this%headers(1:n) = old_headers
-                    this%headers(n+1) = trim(adjustl(header))
+                    allocate(character(len(this%headers)) :: new_headers(n+1))
+                    new_headers(1:n) = this%headers
+                    new_headers(n+1) = trim(adjustl(header))
+                    this%headers = new_headers
                 else
                     error stop 'attempt to add headers to data frame that does not have headers'
                 end if
@@ -1600,8 +1590,6 @@ contains
             end if
             split_line = split(line," ")
             do i=1,num_cols
-                print*, line_ind,i
-                print*, split_line(i)
                 select case (this%data_cols(i)%dtype)
                 case (REAL)
                     read(split_line(i),fmt=*) rval
