@@ -1,7 +1,7 @@
 program main
     use df_utils
     use df_precision
-    use df_data_frame
+    use df_fortranDF
     implicit none
 
     type(data_frame) :: df
