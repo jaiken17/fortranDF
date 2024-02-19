@@ -1509,7 +1509,6 @@ contains
         call get_num_lines(unit,num_lines)
         call get_num_cols(unit,num_cols,line_len)   !returns num columns and how many chars a line is
 
-
         allocate(character(len=line_len+100) :: line)
         read(unit=unit,fmt='(a)',iostat=io_err) line
         if (io_err /= 0) then
@@ -1622,7 +1621,7 @@ contains
         character(len=:),dimension(:),allocatable :: line_split
 
         call get_len_line(unit,line_len,line)
-        line_split = split(line," ")
+        line_split = split(line)
         num_cols = size(line_split,dim=1)
 
         rewind(unit)
