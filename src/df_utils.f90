@@ -6,7 +6,7 @@ module df_utils
 
     private
 
-    public :: get_num_lines, get_len_line, what_type, posix_chdir
+    public :: get_num_lines, get_len_line, what_type
 
     character(len=16),parameter,public :: err_msg_io_read = "IO error on read"
     character(len=17),parameter,public :: err_msg_io_write = "IO error on write"
@@ -24,26 +24,7 @@ module df_utils
         procedure :: get_length_of_line_filename
     end interface get_len_line
 
-    interface
-        function c_chdir(path) bind(C,name="chdir")
-        use iso_c_binding
-        integer(C_INT) :: c_chdir
-        character(C_CHAR) :: path(*)
-        end function
-    end interface
-
 contains
-
-    subroutine posix_chdir(path, err)
-        use iso_c_binding
-        character(*) :: path
-        integer, optional, intent(out) :: err
-        integer :: loc_err
-
-        loc_err =  c_chdir(path//c_null_char)
-
-        if (present(err)) err = loc_err
-    end subroutine posix_chdir
 
     subroutine get_num_lines_unit(unit,num_lines)
         ! Gets number of lines left in file open with unit. If total number of lines
@@ -56,14 +37,14 @@ contains
 
         io_err = 0
         num_lines = 0
-        do while(io_err == 0)
+        do while(io_err /= IOSTAT_END)
             read(unit=unit,fmt='(a)',iostat=io_err)
-            num_lines = num_lines + 1
+            if (io_err /= IOSTAT_END) num_lines = num_lines + 1
         end do
 
-        if (io_err /= IOSTAT_END) then
-            error stop err_msg_io
-        end if
+        ! if (io_err /= IOSTAT_END) then
+        !     error stop err_msg_io
+        ! end if
 
         rewind(unit)
 
@@ -120,7 +101,10 @@ contains
 
         allocate(character(len=default_buffer_len) :: buffer)
 
-        if (present(line)) allocate(character(len=1000) :: line)
+        if (present(line)) then
+            !allocate(character(len=1000) :: line)
+            line = " "
+        end if
 
         end_of_line = .false.
         length = 0
@@ -133,14 +117,19 @@ contains
             if (io_err == IOSTAT_END) then
                 ! Unexpected end of file
                 length = -1
-                if (present(line)) line = ""
+                if (present(line)) line = " "
                 return
             end if
             length = length + size
             if (length > len(line)) call reallocate_char(line,length)
-            if (present(line)) line = trim(adjustl(line))//buffer(:size)
+            if (present(line)) then
+                if (length <= size) then
+                    line = buffer(:size)
+                else
+                    line = trim(adjustl(line))//buffer(:size)
+                end if
+            end if
             if (io_err == IOSTAT_EOR) end_of_line = .true.
-
         end do
 
         rewind(io_unit)
@@ -281,7 +270,7 @@ contains
 
 
 
-    function what_type(string) result(dtype)
+    pure function what_type(string) result(dtype)
         character(len=*),intent(in) :: string
         integer :: dtype
 
@@ -292,7 +281,7 @@ contains
         complex(rk) :: ctest
 
         read(string,fmt=*,iostat=rerr) rtest
-        read(string,fmt=*,iostat=ierr) itest
+        read(string,fmt='(i10)',iostat=ierr) itest
         read(string,fmt=*,iostat=lerr) ltest
         read(string,fmt=*,iostat=cerr) ctest
 
