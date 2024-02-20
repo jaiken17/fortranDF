@@ -6,3 +6,8 @@ option run --compiler gfortran-9
 option test --compiler gfortran-9
 @build
 option build --compiler gfortran-9
+
+@run_release
+option run --compiler gfortran-9 --profile release
+@build_release
+option build --compiler gfortran-9 --profile release
