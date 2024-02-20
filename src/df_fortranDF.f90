@@ -1371,12 +1371,13 @@ contains
 
 ! ~~~~ Write Data Frame
 
-    subroutine df_write_unformatted(this,unit,iostat)
+    !subroutine df_write_unformatted(this,unit,iostat)
+    subroutine df_write_unformatted(this,unit)
         ! If format args are given, must be in form: "i20", "f10.5", "ES30.20", etc.
         ! -> Formats canot have parentheses 
         class(data_frame),intent(in) :: this
         integer,intent(in),optional :: unit
-        integer,intent(out),optional :: iostat
+        !integer,intent(out),optional :: iostat
 
         character(len=100) :: rfmt, ifmt, lfmt, chfmt, cfmt, fmt_widthch, pfmt
         character(len=:),allocatable :: output_char
@@ -1422,20 +1423,20 @@ contains
         do i=1,len_cols
             do j=1,num_cols
                 select case (this%data_cols(j)%dtype)
-                    case (REAL)
+                    case (REAL_NUM)
                         pfmt = "(a2,"//trim(adjustl(rfmt))//",a1)"
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getr(j,i), " "
-                    case (INTEGER)
+                    case (INTEGER_NUM)
                         pfmt = "(a2,"//trim(adjustl(ifmt))//",a1)"
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%geti(j,i), " "
-                    case (LOGICAL)
+                    case (LOGICAL_NUM)
                         pfmt = "(a2,"//trim(adjustl(lfmt))//",a1)"
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getl(j,i), " "
-                    case (CHARACTER)
+                    case (CHARACTER_NUM)
                         pfmt = "(a2,"//trim(adjustl(chfmt))//",a1)"
                         output_char = trim(adjustl(this%getch(j,i)))
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", adjustr(output_char), " "
-                    case (COMPLEX)
+                    case (COMPLEX_NUM)
                         error stop 'cannot print complex data type yet'
                         pfmt = "(a2,"//trim(adjustl(cfmt))//",a1)"
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getc(j,i), " "
@@ -1526,22 +1527,22 @@ contains
             do i=1,num_cols
                 dtype = what_type(split_line(i))
                 select case (dtype)
-                    case (REAL)
+                    case (REAL_NUM)
                         call this%append_emptyr(num_lines-1,trim(adjustl(headers(i))))
                         read(split_line(i),fmt=*) rval
                         call this%setr(i,1,rval)
-                    case (INTEGER)
+                    case (INTEGER_NUM)
                         call this%append_emptyi(num_lines-1,trim(adjustl(headers(i))))
                         read(split_line(i),fmt=*) ival
                         call this%seti(i,1,ival)
-                    case (LOGICAL)
+                    case (LOGICAL_NUM)
                         call this%append_emptyl(num_lines-1,trim(adjustl(headers(i))))
                         read(split_line(i),fmt=*) lval
                         call this%setl(i,1,lval)
-                    case (CHARACTER)
+                    case (CHARACTER_NUM)
                         call this%append_emptych(num_lines-1,trim(adjustl(headers(i))))
                         call this%setch(i,1,split_line(i))
-                    case (COMPLEX)
+                    case (COMPLEX_NUM)
                         call this%append_emptyc(num_lines-1,trim(adjustl(headers(i))))
                         read(split_line(i),fmt=*) cval
                         call this%setc(i,1,cval)
@@ -1553,22 +1554,22 @@ contains
             do i=1,num_cols
                 dtype = what_type(split_line(i))
                 select case (dtype)
-                    case (REAL)
+                    case (REAL_NUM)
                         call this%append_emptyr(num_lines)
                         read(split_line(i),fmt=*) rval
                         call this%setr(i,1,rval)
-                    case (INTEGER)
+                    case (INTEGER_NUM)
                         call this%append_emptyi(num_lines)
                         read(split_line(i),fmt=*) ival
                         call this%seti(i,1,ival)
-                    case (LOGICAL)
+                    case (LOGICAL_NUM)
                         call this%append_emptyl(num_lines)
                         read(split_line(i),fmt=*) lval
                         call this%setl(i,1,lval)
-                    case (CHARACTER)
+                    case (CHARACTER_NUM)
                         call this%append_emptych(num_lines)
                         call this%setch(i,1,split_line(i))
-                    case (COMPLEX)
+                    case (COMPLEX_NUM)
                         call this%append_emptyc(num_lines)
                         read(split_line(i),fmt=*) cval
                         call this%setc(i,1,cval)
@@ -1588,18 +1589,18 @@ contains
             split_line = split(line," ")
             do i=1,num_cols
                 select case (this%data_cols(i)%dtype)
-                case (REAL)
+                case (REAL_NUM)
                     read(split_line(i),fmt=*) rval
                     call this%setr(i,line_ind+offset,rval)
-                case (INTEGER)
+                case (INTEGER_NUM)
                     read(split_line(i),fmt=*) ival
                     call this%seti(i,line_ind+offset,ival)
-                case (LOGICAL)
+                case (LOGICAL_NUM)
                     read(split_line(i),fmt=*) lval
                     call this%setl(i,line_ind+offset,lval)
-                case (CHARACTER)
+                case (CHARACTER_NUM)
                     call this%setch(i,line_ind+offset,split_line(i))
-                case (COMPLEX)
+                case (COMPLEX_NUM)
                     read(split_line(i),fmt=*) cval
                     call this%setc(i,line_ind+offset,cval)
             end select

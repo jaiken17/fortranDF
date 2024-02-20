@@ -287,15 +287,15 @@ contains
 
 
         if (lerr == 0) then
-            dtype = LOGICAL
+            dtype = LOGICAL_NUM
         else if (ierr == 0) then
-            dtype = INTEGER
+            dtype = INTEGER_NUM
         else if (rerr == 0) then
-            dtype = REAL
+            dtype = REAL_NUM
         else if (cerr == 0) then
-            dtype = COMPLEX
+            dtype = COMPLEX_NUM
         else
-            dtype = CHARACTER
+            dtype = CHARACTER_NUM
         end if
 
     end function what_type

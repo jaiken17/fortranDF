@@ -94,7 +94,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
 
-        this%dtype = REAL
+        this%dtype = REAL_NUM
         this%n = size(dcol,dim=1)
         allocate(this%rcol(this%n))
         this%rcol = dcol
@@ -109,7 +109,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
 
-        this%dtype = INTEGER
+        this%dtype = INTEGER_NUM
         this%n = size(dcol,dim=1)
         allocate(this%icol(this%n))
         this%icol = dcol
@@ -123,7 +123,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
         
-        this%dtype = LOGICAL
+        this%dtype = LOGICAL_NUM
         this%n = size(dcol,dim=1)
         allocate(this%lcol(this%n))
         this%lcol = dcol
@@ -142,7 +142,7 @@ contains
         this%n = size(dcol,dim=1)
         elem_len = len(dcol(1))
 
-        this%dtype = CHARACTER
+        this%dtype = CHARACTER_NUM
         allocate(character(elem_len) :: this%charcol(this%n))
         this%charcol = dcol
 
@@ -155,7 +155,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
 
-        this%dtype = COMPLEX
+        this%dtype = COMPLEX_NUM
         this%n = size(dcol,dim=1)
         allocate(this%ccol(this%n))
         this%ccol = dcol
@@ -172,7 +172,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
 
-        this%dtype = REAL
+        this%dtype = REAL_NUM
         this%n = n
         allocate(this%rcol(n))
 
@@ -185,7 +185,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
 
-        this%dtype = INTEGER
+        this%dtype = INTEGER_NUM
         this%n = n
         allocate(this%icol(n))
         
@@ -198,7 +198,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
 
-        this%dtype = LOGICAL
+        this%dtype = LOGICAL_NUM
         this%n = n
         allocate(this%lcol(n))
         
@@ -220,7 +220,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
 
-        this%dtype = CHARACTER
+        this%dtype = CHARACTER_NUM
         this%n = n
         allocate(character(len=char_len) :: this%charcol(n))
         
@@ -233,7 +233,7 @@ contains
         if (this%initialized) call this%destroy()
         this%initialized = .true.
 
-        this%dtype = COMPLEX
+        this%dtype = COMPLEX_NUM
         this%n = n
         allocate(this%ccol(n))
         
@@ -260,7 +260,7 @@ contains
         class(column),intent(in) :: this
         real(rk),dimension(this%n) :: col
 
-        if (this%dtype /= REAL) error stop 'column is not of type real'
+        if (this%dtype /= REAL_NUM) error stop 'column is not of type real'
 
         col = this%rcol
 
@@ -270,7 +270,7 @@ contains
         class(column),intent(in) :: this
         integer(ik),dimension(this%n) :: col
 
-        if (this%dtype /= INTEGER) error stop 'column is not of type integer'
+        if (this%dtype /= INTEGER_NUM) error stop 'column is not of type integer'
 
         col = this%icol
 
@@ -280,7 +280,7 @@ contains
         class(column),intent(in) :: this
         logical,dimension(this%n) :: col
 
-        if (this%dtype /= LOGICAL) error stop 'column is not of type logical'
+        if (this%dtype /= LOGICAL_NUM) error stop 'column is not of type logical'
 
         col = this%lcol
 
@@ -292,7 +292,7 @@ contains
 
         integer :: arr_size, elem_len
 
-        if (this%dtype /= CHARACTER) error stop 'column is not of type character'
+        if (this%dtype /= CHARACTER_NUM) error stop 'column is not of type character'
 
         ! will cause segfault if col not char type
         arr_size = size(this%charcol,dim=1)
@@ -307,7 +307,7 @@ contains
         class(column),intent(in) :: this
         complex(rk),dimension(this%n) :: col
 
-        if (this%dtype /= COMPLEX) error stop 'column is not of type complex'
+        if (this%dtype /= COMPLEX_NUM) error stop 'column is not of type complex'
 
         col = this%ccol
 
@@ -332,7 +332,7 @@ contains
         integer,intent(in) :: i
         real(rk) :: val
 
-        if (this%dtype /= REAL) error stop 'column is not of type real'
+        if (this%dtype /= REAL_NUM) error stop 'column is not of type real'
 
         if (i > this%n) error stop 'out of bounds attempt on data column'
 
@@ -345,7 +345,7 @@ contains
         integer,intent(in) :: i
         integer(ik) :: val
 
-        if (this%dtype /= INTEGER) error stop 'column is not of type integer'
+        if (this%dtype /= INTEGER_NUM) error stop 'column is not of type integer'
 
         if (i > this%n) error stop 'out of bounds attempt on data column'
 
@@ -358,7 +358,7 @@ contains
         integer,intent(in) :: i
         logical :: val
 
-        if (this%dtype /= LOGICAL) error stop 'column is not of type logical'
+        if (this%dtype /= LOGICAL_NUM) error stop 'column is not of type logical'
 
         if (i > this%n) error stop 'out of bounds attempt on data column'
 
@@ -371,7 +371,7 @@ contains
         integer,intent(in) :: i
         character(len=:),allocatable :: val
 
-        if (this%dtype /= CHARACTER) error stop 'column is not of type character'
+        if (this%dtype /= CHARACTER_NUM) error stop 'column is not of type character'
 
         if (i > this%n) error stop 'out of bounds attempt on data column'
 
@@ -384,7 +384,7 @@ contains
         integer,intent(in) :: i
         complex(rk) :: val
 
-        if (this%dtype /= COMPLEX) error stop 'column is not of type complex'
+        if (this%dtype /= COMPLEX_NUM) error stop 'column is not of type complex'
 
         if (i > this%n) error stop 'out of bounds attempt on data column'
 
@@ -400,7 +400,7 @@ contains
         integer,intent(in) :: i
         real(rk),intent(in) :: val
 
-        if (this%dtype /= REAL) error stop 'column is not of type real'
+        if (this%dtype /= REAL_NUM) error stop 'column is not of type real'
 
         this%rcol(i) = val
 
@@ -411,7 +411,7 @@ contains
         integer,intent(in) :: i
         integer(ik),intent(in) :: val
 
-        if (this%dtype /= INTEGER) error stop 'column is not of type integer'
+        if (this%dtype /= INTEGER_NUM) error stop 'column is not of type integer'
 
         this%icol(i) = val
 
@@ -422,7 +422,7 @@ contains
         integer,intent(in) :: i
         logical,intent(in) :: val
 
-        if (this%dtype /= LOGICAL) error stop 'column is not of type logical'
+        if (this%dtype /= LOGICAL_NUM) error stop 'column is not of type logical'
 
         this%lcol(i) = val
 
@@ -433,7 +433,7 @@ contains
         integer,intent(in) :: i
         character(len=*),intent(in) :: val
 
-        if (this%dtype /= CHARACTER) error stop 'column is not of type character'
+        if (this%dtype /= CHARACTER_NUM) error stop 'column is not of type character'
 
         this%charcol(i) = val
 
@@ -444,7 +444,7 @@ contains
         integer,intent(in) :: i
         complex(rk),intent(in) :: val
 
-        if (this%dtype /= COMPLEX) error stop 'column is not of type complex'
+        if (this%dtype /= COMPLEX_NUM) error stop 'column is not of type complex'
 
         this%ccol(i) = val
 

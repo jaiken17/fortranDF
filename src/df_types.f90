@@ -1,10 +1,10 @@
 module df_types
     implicit none
 
-    integer,parameter,public :: INTEGER = 1,       &
-                                REAL = 2,          &
-                                LOGICAL = 3,       &
-                                CHARACTER = 4,     &
-                                COMPLEX = 5
+    integer,parameter,public :: INTEGER_NUM = 1,       &
+                                REAL_NUM = 2,          &
+                                LOGICAL_NUM = 3,       &
+                                CHARACTER_NUM = 4,     &
+                                COMPLEX_NUM = 5
 
 end module df_types
