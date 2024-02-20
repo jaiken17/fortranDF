@@ -119,11 +119,9 @@ module df_fortranDF
         generic,public :: setc => df_change_single_header_complex, df_change_single_indices_complex,        &
                                   df_change_col_index_complex, df_change_col_header_complex
 
-        procedure :: df_write_unformatted
-        generic,public :: write => df_write_unformatted
+        procedure,public :: write => df_write_unformatted
 
-        procedure :: df_read_df_file
-        generic,public :: read => df_read_df_file
+        procedure,public :: read => df_read_df_file
     end type data_frame
 
 
