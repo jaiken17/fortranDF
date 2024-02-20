@@ -159,7 +159,7 @@ Many of the procedures are overloaded for each intrinsic data type and so in pla
 #### `df%new()`
 ```fortran
 subroutine new(char_len)
-integer,intent(in),optional :: char_len
+    integer,intent(in),optional :: char_len
 ```
 
 Subrtoutine that intializes `data_frame` object. Sets `max_char_len` to either `DEFAULT_MAX_CHAR_LEN` or to `char_len` if present.
@@ -173,35 +173,35 @@ Subroutine that deallocates any allocatable vars within `data_frame` object.
 #### `df%ncols()`
 ```fortran
 pure function ncols() result(n)
-integer :: n
+    integer :: n
 ```
 Function to get number of columns.
 
 #### `df%nrows()`
 ```fortran
 pure function nrows() result(num_rows)
-integer :: num_rows
+    integer :: num_rows
 ```
 Function to get number of rows/number of elements in each column.
 
 #### `df%dtype()`
 ```fortran
 pure function dtype(header)
-character(len=*),intent(in) :: header
-integer :: dtype
+    character(len=*),intent(in) :: header
+    integer :: dtype
 ```
 ```fortran
 pure function dtype(j)
-integer,intent(in) :: j
-integer :: dtype
+    integer,intent(in) :: j
+    integer :: dtype
 ```
 Returns integer corresponding to data type contained within column. Returned value can be compared with parameter integers in `df_utils.f90`. Two calling signatures to choose column either using index, `j`, or named header, `header`.
 
 #### `df%append(col,header)`
 ```fortran
 subroutine append(col,header)
-intr_type,dimension(:),intent(in) :: col
-character(len=*),intent(in),optional :: header
+    intr_type,dimension(:),intent(in) :: col
+    character(len=*),intent(in),optional :: header
 ```
 Appends a column onto the `data_frame` object. Optionally include a header for the column. Rule of all columns having headers or no headers is enforced.
 
@@ -209,62 +209,62 @@ Appends a column onto the `data_frame` object. Optionally include a header for t
 **Note**: '`*`' can be raplced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types (`real`, `integer`, `logical`, `character`, `complex`).
 ```fortran
 subroutine append_empty*(col_size,header)
-integer,intent(in) :: col_size
-character(len=*),intent(in),optional :: header
+    integer,intent(in) :: col_size
+    character(len=*),intent(in),optional :: header
 ```
 Appends an *empty* (but allocated) column of size `col_size` onto the `data_frame` object. `dtype` is determined through which of the 5 procedures are called. Optionally include a header for the column. Rule of all columns having headers or no headers is enforced.
 
 #### `df%get*()`
 **Note**: '`*`' can be raplced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types.
 ```fortran
-function get(i,j) return(val)
-integer,intent(in) :: i, j
-intr_type :: val
+function get*(i,j) return(val)
+    integer,intent(in) :: i, j
+    intr_type :: val
 ```
 Returns value located at column `i` and row `j`.
 ```fortran
-function get(header,j) return(val)
-character(len=*),intent(in) :: header
-integer,intent(in) :: j
-intr_type :: val
+function get*(header,j) return(val)
+    character(len=*),intent(in) :: header
+    integer,intent(in) :: j
+    intr_type :: val
 ```
 Returns value of row `j` in column corresponding to `header`.
 ```fortran
-function get(i) return(col)
-integer,intent(in) :: i
-intr_type,dimension(col_size) :: col
+function get*(i) return(col)
+    integer,intent(in) :: i
+    intr_type,dimension(col_size) :: col
 ```
 Returns rank 1 array of `i`th column. `col_size` is type member.
 ```fortran
-function get(header) return(col)
-character(len=*),intent(in) :: header
-intr_type,dimension(col_size),allocatable :: col
+function get*(header) return(col)
+    character(len=*),intent(in) :: header
+    intr_type,dimension(col_size),allocatable :: col
 ```
 Returns rank 1 array of `header` column. `col_size` is type member.
 
 #### `df%set*()`
 **Note**: '`*`' can be raplced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types.
 ```fortran
-subroutine set(i,j,val)
+subroutine set*(i,j,val)
     integer,intent(in) :: i,j
     intr_type,intent(in) :: val
 ```
 Sets value located at column `i` and row `j` to `val`.
 ```fortran
-subroutine set(header,j,val)
+subroutine set*(header,j,val)
     character(len=*),intent(in) :: header
     integer,intent(in) :: j
     intr_type,intent(in) :: val
 ```
 Sets value located at row `j` in column `header` to `val`.
 ```fortran
-subroutine set(i,col)
+subroutine set*(i,col)
     integer,intent(in) :: i
     intr_type,dimension(col_size),intent(in) :: col
 ```
 Sets entire `i`th column to `col`.
 ```fortran
-subroutine set(header,col)
+subroutine set*(header,col)
     character(len=*),intent(in) :: header
     intr_type,dimension(col_size),intent(in) :: col
 ```
