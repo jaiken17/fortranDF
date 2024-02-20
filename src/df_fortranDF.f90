@@ -48,11 +48,11 @@ module df_fortranDF
         generic,public :: append => add_col_real, add_col_integer, add_col_logical,    &
                                     add_col_character, add_col_complex
         ! Public?
-        procedure :: append_emptyr => add_empty_col_real
-        procedure :: append_emptyi => add_empty_col_integer
-        procedure :: append_emptyl => add_empty_col_logical
-        procedure :: append_emptych => add_empty_col_character
-        procedure :: append_emptyc => add_empty_col_complex
+        procedure,public :: append_emptyr => add_empty_col_real
+        procedure,public :: append_emptyi => add_empty_col_integer
+        procedure,public :: append_emptyl => add_empty_col_logical
+        procedure,public :: append_emptych => add_empty_col_character
+        procedure,public :: append_emptyc => add_empty_col_complex
 
         
         procedure :: df_get_val_real,       &
