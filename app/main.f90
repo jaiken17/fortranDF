@@ -1,5 +1,6 @@
 program main
     use df_utils
+    use df_types
     use df_precision
     use df_fortranDF
     implicit none
@@ -14,17 +15,18 @@ program main
 
     call df%write()
 
-    print*, " "
+    print*, " " ! newline
 
-    print*, df%getr("value")
-    print*, df%geti(1)
+    print*, "get column 'value': ", df%getr("value")
+    print*, "get column 1: ", df%geti(1)
 
 
     call df%destroy()
 
-    print*, " "
+    print*, " " ! newline
 
 
+    ! Make truth table for AND gate
     call df%new()
     call df%append([.true.,.true.,.false.,.false.],"a")
     call df%append([.true.,.false.,.true.,.false.],"b")
@@ -33,9 +35,17 @@ program main
     call df%write()
 
     call df%destroy()
+   
+    ! Make data frame from file
     call df%new()
     call df%read("app/test_file.txt",.true.)
     call df%write()
-    print*, df%dtype("header2")
+    print*, "Type of 'header2':",df%dtype("header2")
+    print*, "Type values: "
+    print*, "real:      ", REAL_NUM
+    print*, "integer:   ", INTEGER_NUM
+    print*, "logical:   ", LOGICAL_NUM
+    print*, "character: ", CHARACTER_NUM
+    print*, "complex:   ", COMPLEX_NUM
 
 end program main
