@@ -206,7 +206,7 @@ subroutine append(col,header)
 Appends a column onto the `data_frame` object. Optionally include a header for the column. Rule of all columns having headers or no headers is enforced.
 
 #### `df%append_empty*(col_size,header)`
-**Note**: '`*`' can be raplced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types (`real`, `integer`, `logical`, `character`, `complex`).
+**Note**: '`*`' can be replaced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types (`real`, `integer`, `logical`, `character`, `complex`).
 ```fortran
 subroutine append_empty*(col_size,header)
     integer,intent(in) :: col_size
@@ -215,7 +215,7 @@ subroutine append_empty*(col_size,header)
 Appends an *empty* (but allocated) column of size `col_size` onto the `data_frame` object. `dtype` is determined through which of the 5 procedures are called. Optionally include a header for the column. Rule of all columns having headers or no headers is enforced.
 
 #### `df%get*()`
-**Note**: '`*`' can be raplced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types.
+**Note**: '`*`' can be replaced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types.
 ```fortran
 function get*(i,j) return(val)
     integer,intent(in) :: i, j
@@ -243,7 +243,7 @@ function get*(header) return(col)
 Returns rank 1 array of `header` column. `col_size` is type member.
 
 #### `df%set*()`
-**Note**: '`*`' can be raplced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types.
+**Note**: '`*`' can be replaced by `r`, `i`, `l`, `ch`, or `c`, corresponding to each of the 5 intrinsic types.
 ```fortran
 subroutine set*(i,j,val)
     integer,intent(in) :: i,j
