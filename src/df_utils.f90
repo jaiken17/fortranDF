@@ -121,12 +121,12 @@ contains
                 return
             end if
             length = length + size
-            if (length > len(line)) call reallocate_char(line,length)
             if (present(line)) then
                 if (length <= size) then
                     line = buffer(:size)
                 else
-                    line = trim(adjustl(line))//buffer(:size)
+                    if (length > len(line)) call reallocate_char(line,length)
+                    line = line//buffer(:size)
                 end if
             end if
             if (io_err == IOSTAT_EOR) end_of_line = .true.
@@ -150,7 +150,10 @@ contains
 
         allocate(character(len=buffer_len) :: buffer)
 
-        if (present(line)) allocate(character(len=1000) :: line)
+        if (present(line)) then
+            !allocate(character(len=1000) :: line)
+            line = " "
+        end if
 
         end_of_line = .false.
         length = 0
@@ -163,14 +166,19 @@ contains
             if (io_err == IOSTAT_END) then
                 ! Unexpected end of file
                 length = -1
-                if (present(line)) line = ""
+                if (present(line)) line = " "
                 return
             end if
             length = length + size
-            if (length > len(line)) call reallocate_char(line,length)
-            if (present(line)) line = trim(adjustl(line))//buffer(:size)
+            if (present(line)) then
+                if (length <= size) then
+                    line = buffer(:size)
+                else
+                    if (length > len(line)) call reallocate_char(line,length)
+                    line = line//buffer(:size)
+                end if
+            end if
             if (io_err == IOSTAT_EOR) end_of_line = .true.
-
         end do
 
         rewind(io_unit)
