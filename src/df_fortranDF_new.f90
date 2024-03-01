@@ -1489,7 +1489,7 @@ contains
     subroutine df_change_col_header_real(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        real(rk),dimension(this%n),intent(in) :: col
+        real(rk),dimension(this%col_size),intent(in) :: col
         
         integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
@@ -1510,7 +1510,7 @@ contains
     subroutine df_change_col_header_integer(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        integer(ik),dimension(this%n),intent(in) :: col
+        integer(ik),dimension(this%col_size),intent(in) :: col
         
         integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
@@ -1531,7 +1531,7 @@ contains
     subroutine df_change_col_header_logical(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        logical,dimension(this%n),intent(in) :: col
+        logical,dimension(this%col_size),intent(in) :: col
         
         integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
@@ -1552,7 +1552,7 @@ contains
     subroutine df_change_col_header_character(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        character(len=*),dimension(:),intent(in) :: col
+        character(len=this%max_char_len),dimension(this%col_size),intent(in) :: col
         
         integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
@@ -1575,9 +1575,9 @@ contains
     subroutine df_change_col_header_complex(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        complex(rk),dimension(this%n),intent(in) :: col
+        complex(rk),dimension(this%col_size),intent(in) :: col
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1587,7 +1587,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%new(col)
+        if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(ind,2)
+        this%cdata(:,data_index) = col
 
     end subroutine df_change_col_header_complex
 
@@ -1645,7 +1647,7 @@ contains
         end if
         do i=1,len_cols
             do j=1,num_cols
-                select case (this%data_cols(j)%dtype)
+                select case (this%type_loc(j,1))
                     case (REAL_NUM)
                         pfmt = "(a2,"//trim(adjustl(rfmt))//",a1)"
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getr(j,i), " "
@@ -1811,7 +1813,7 @@ contains
             end if
             split_line = split(line," ")
             do i=1,num_cols
-                select case (this%data_cols(i)%dtype)
+                select case (this%type_loc(i,1))
                 case (REAL_NUM)
                     read(split_line(i),fmt=*) rval
                     call this%setr(i,line_ind+offset,rval)
