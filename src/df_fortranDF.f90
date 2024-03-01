@@ -1274,7 +1274,7 @@ contains
     subroutine df_change_col_header_real(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        real(rk),dimension(this%n),intent(in) :: col
+        real(rk),dimension(this%col_size),intent(in) :: col
         
         integer :: ind
         character(len=:),allocatable :: trunc_header
@@ -1293,7 +1293,7 @@ contains
     subroutine df_change_col_header_integer(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        integer(ik),dimension(this%n),intent(in) :: col
+        integer(ik),dimension(this%col_size),intent(in) :: col
         
         integer :: ind
         character(len=:),allocatable :: trunc_header
@@ -1312,7 +1312,7 @@ contains
     subroutine df_change_col_header_logical(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        logical,dimension(this%n),intent(in) :: col
+        logical,dimension(this%col_size),intent(in) :: col
         
         integer :: ind
         character(len=:),allocatable :: trunc_header
@@ -1352,7 +1352,7 @@ contains
     subroutine df_change_col_header_complex(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        complex(rk),dimension(this%n),intent(in) :: col
+        complex(rk),dimension(this%col_size),intent(in) :: col
         
         integer :: ind
         character(len=:),allocatable :: trunc_header
