@@ -170,8 +170,6 @@ contains
     subroutine df_destructor(this)
         class(data_frame),intent(inout) :: this
 
-        integer :: i
-
         if (allocated(this%rdata)) deallocate(this%rdata)
         if (allocated(this%idata)) deallocate(this%idata)
         if (allocated(this%ldata)) deallocate(this%ldata)
@@ -289,13 +287,18 @@ contains
         n = this%n
         rcols = this%rcols
         if (n > 0) then
+            call this%add_type_loc(REAL_NUM,rcols+1)
             this%n = n + 1
             this%rcols = rcols + 1
-            call this%add_type_loc(REAL_NUM,rcols+1)
-            allocate(new_cols(this%col_size,rcols))
-            new_cols(:,1:rcols) = this%rdata
-            new_cols(:,rcols+1) = col
-            this%rdata = new_cols
+            if (rcols > 0) then
+                allocate(new_cols(this%col_size,rcols+1))
+                new_cols(:,1:rcols) = this%rdata
+                new_cols(:,rcols+1) = col
+                this%rdata = new_cols
+            else
+                allocate(this%rdata(this%col_size,1))
+                this%rdata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -310,9 +313,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(REAL_NUM,1)
             this%n = 1
             this%rcols = 1
-            call this%add_type_loc(REAL_NUM,this%rcols)
             allocate(this%rdata(this%col_size,1))
             this%rdata(:,1) = col
             if (present(header)) then
@@ -346,13 +349,18 @@ contains
         n = this%n
         icols = this%icols
         if (n > 0) then
+            call this%add_type_loc(INTEGER_NUM,icols+1)
             this%n = n + 1
             this%icols = icols + 1
-            call this%add_type_loc(INTEGER_NUM,icols+1)
-            allocate(new_cols(this%col_size,icols+1))
-            new_cols(:,1:icols) = this%idata
-            new_cols(:,icols+1) = col
-            this%idata = new_cols
+            if (icols > 0) then
+                allocate(new_cols(this%col_size,icols+1))
+                new_cols(:,1:icols) = this%idata
+                new_cols(:,icols+1) = col
+                this%idata = new_cols
+            else
+                allocate(this%idata(this%col_size,1))
+                this%idata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -367,9 +375,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(INTEGER_NUM,1)
             this%n = 1
             this%icols = 1
-            call this%add_type_loc(INTEGER_NUM,this%icols)
             allocate(this%idata(this%col_size,1))
             this%idata(:,1) = col
             if (present(header)) then
@@ -403,13 +411,18 @@ contains
         n = this%n
         lcols = this%lcols
         if (n > 0) then
+            call this%add_type_loc(LOGICAL_NUM,lcols+1)
             this%n = n + 1
             this%lcols = lcols + 1
-            call this%add_type_loc(LOGICAL_NUM,lcols+1)
-            allocate(new_cols(this%col_size,lcols+1))
-            new_cols(:,1:lcols) = this%ldata
-            new_cols(:,lcols+1) = col
-            this%ldata = new_cols
+            if (lcols > 0) then
+                allocate(new_cols(this%col_size,lcols+1))
+                new_cols(:,1:lcols) = this%ldata
+                new_cols(:,lcols+1) = col
+                this%ldata = new_cols
+            else
+                allocate(this%ldata(this%col_size,1))
+                this%ldata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -424,9 +437,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(LOGICAL_NUM,1)
             this%n = 1
             this%lcols = 1
-            call this%add_type_loc(LOGICAL_NUM,this%lcols)
             allocate(this%ldata(this%col_size,1))
             this%ldata(:,1) = col
             if (present(header)) then
@@ -460,13 +473,18 @@ contains
         n = this%n
         chcols = this%chcols
         if (n > 0) then
+            call this%add_type_loc(CHARACTER_NUM,chcols+1)
             this%n = n + 1
             this%chcols = chcols + 1
-            call this%add_type_loc(CHARACTER_NUM,chcols+1)
-            allocate(character(this%max_char_len) :: new_cols(this%col_size,chcols+1))
-            new_cols(:,1:chcols) = this%chdata
-            new_cols(:,chcols+1) = col
-            this%chdata = new_cols
+            if (chcols > 0) then
+                allocate(character(this%max_char_len) :: new_cols(this%col_size,chcols+1))
+                new_cols(:,1:chcols) = this%chdata
+                new_cols(:,chcols+1) = col
+                this%chdata = new_cols
+            else
+                allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
+                this%chdata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -481,9 +499,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(CHARACTER_NUM,1)
             this%n = 1
             this%chcols = 1
-            call this%add_type_loc(CHARACTER_NUM,this%chcols)
             allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
             this%chdata(:,1) = col
             if (present(header)) then
@@ -517,13 +535,18 @@ contains
         n = this%n
         ccols = this%ccols
         if (n > 0) then
+            call this%add_type_loc(COMPLEX_NUM,ccols+1)
             this%n = n + 1
             this%ccols = ccols + 1
-            call this%add_type_loc(COMPLEX_NUM,ccols+1)
-            allocate(new_cols(this%col_size,ccols+1))
-            new_cols(:,1:ccols) = this%cdata
-            new_cols(:,ccols+1) = col
-            this%cdata = new_cols
+            if (ccols > 0) then
+                allocate(new_cols(this%col_size,ccols+1))
+                new_cols(:,1:ccols) = this%cdata
+                new_cols(:,ccols+1) = col
+                this%cdata = new_cols
+            else
+                allocate(this%cdata(this%col_size,1))
+                this%cdata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -538,9 +561,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(COMPLEX_NUM,1)
             this%n = 1
             this%ccols = 1
-            call this%add_type_loc(COMPLEX_NUM,this%ccols)
             allocate(this%cdata(this%col_size,1))
             this%cdata(:,1) = col
             if (present(header)) then
@@ -577,12 +600,16 @@ contains
         n = this%n
         rcols = this%rcols
         if (n > 0) then
+            call this%add_type_loc(REAL_NUM,rcols+1)
             this%n = n + 1
             this%rcols = rcols + 1
-            call this%add_type_loc(REAL_NUM,rcols+1)
-            allocate(new_cols(this%col_size,rcols+1))
-            new_cols(:,1:rcols) = this%rdata
-            this%rdata = new_cols
+            if (rcols > 0) then
+                allocate(new_cols(this%col_size,rcols+1))
+                new_cols(:,1:rcols) = this%rdata
+                this%rdata = new_cols
+            else
+                allocate(this%rdata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -597,9 +624,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(REAL_NUM,1)
             this%n = 1
             this%rcols = 1
-            call this%add_type_loc(REAL_NUM,this%rcols)
             allocate(this%rdata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
@@ -633,12 +660,16 @@ contains
         n = this%n
         icols = this%icols
         if (n > 0) then
+            call this%add_type_loc(INTEGER_NUM,icols+1)
             this%n = n + 1
             this%icols = icols + 1
-            call this%add_type_loc(INTEGER_NUM,icols+1)
-            allocate(new_cols(this%col_size,icols+1))
-            new_cols(:,1:icols) = this%idata
-            this%idata = new_cols
+            if (icols > 0) then
+                allocate(new_cols(this%col_size,icols+1))
+                new_cols(:,1:icols) = this%idata
+                this%idata = new_cols
+            else
+                allocate(this%idata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -653,9 +684,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(INTEGER_NUM,1)
             this%n = 1
             this%icols = 1
-            call this%add_type_loc(INTEGER_NUM,this%icols)
             allocate(this%idata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
@@ -689,12 +720,16 @@ contains
         n = this%n
         lcols = this%lcols
         if (n > 0) then
+            call this%add_type_loc(LOGICAL_NUM,lcols+1)
             this%n = n + 1
             this%lcols = lcols + 1
-            call this%add_type_loc(LOGICAL_NUM,lcols+1)
-            allocate(new_cols(this%col_size,lcols+1))
-            new_cols(:,1:lcols) = this%ldata
-            this%ldata = new_cols
+            if (lcols > 0) then
+                allocate(new_cols(this%col_size,lcols+1))
+                new_cols(:,1:lcols) = this%ldata
+                this%ldata = new_cols
+            else
+                allocate(this%ldata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -709,9 +744,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(LOGICAL_NUM,1)
             this%n = 1
             this%lcols = 1
-            call this%add_type_loc(LOGICAL_NUM,this%lcols)
             allocate(this%ldata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
@@ -745,12 +780,16 @@ contains
         n = this%n
         chcols = this%chcols
         if (n > 0) then
+            call this%add_type_loc(CHARACTER_NUM,chcols+1)
             this%n = n + 1
             this%chcols = chcols + 1
-            call this%add_type_loc(CHARACTER_NUM,chcols+1)
-            allocate(character(this%max_char_len) :: new_cols(this%col_size,chcols+1))
-            new_cols(:,1:chcols) = this%chdata
-            this%chdata = new_cols
+            if (chcols > 0) then
+                allocate(character(this%max_char_len) :: new_cols(this%col_size,chcols+1))
+                new_cols(:,1:chcols) = this%chdata
+                this%chdata = new_cols
+            else
+                allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -765,9 +804,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(CHARACTER_NUM,1)
             this%n = 1
             this%chcols = 1
-            call this%add_type_loc(CHARACTER_NUM,this%chcols)
             allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
@@ -801,12 +840,16 @@ contains
         n = this%n
         ccols = this%ccols
         if (n > 0) then
+            call this%add_type_loc(COMPLEX_NUM,ccols+1)
             this%n = n + 1
             this%ccols = ccols + 1
-            call this%add_type_loc(COMPLEX_NUM,ccols+1)
-            allocate(new_cols(this%col_size,ccols+1))
-            new_cols(:,1:ccols) = this%cdata
-            this%cdata = new_cols
+            if (ccols > 0) then
+                allocate(new_cols(this%col_size,ccols+1))
+                new_cols(:,1:ccols) = this%cdata
+                this%cdata = new_cols
+            else
+                allocate(this%cdata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -821,9 +864,9 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(COMPLEX_NUM,1)
             this%n = 1
             this%ccols = 1
-            call this%add_type_loc(COMPLEX_NUM,this%ccols)
             allocate(this%cdata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
