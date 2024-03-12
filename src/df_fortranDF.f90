@@ -25,8 +25,11 @@ module df_fortranDF
         character(len=:),dimension(:),allocatable :: headers
 
         integer,dimension(:,:),allocatable :: type_loc
+        integer,dimension(:),allocatable :: col_lens
 
         integer :: rcols, icols, lcols, chcols, ccols
+        integer :: rrows_max, irows_max, lrows_max, chrows_max, crows_max
+
         real(rk),dimension(:,:),allocatable :: rdata
         integer(ik),dimension(:,:),allocatable :: idata
         logical,dimension(:,:),allocatable :: ldata
@@ -53,6 +56,7 @@ module df_fortranDF
         generic,public :: dtype => df_get_col_type_header, df_get_col_type_index
 
         procedure :: add_type_loc
+        procedure :: add_col_len
 
         procedure :: already_header
         procedure :: add_col_real,      &
@@ -60,6 +64,18 @@ module df_fortranDF
                      add_col_logical,   &
                      add_col_character, &
                      add_col_complex
+
+        procedure :: stretch_cols_real,         &
+                     stretch_cols_integer,      &
+                     stretch_cols_logical,      &
+                     stretch_cols_character,    &
+                     stretch_cols_complex
+        ! procedure :: add_col_var_real,      &
+        !              add_col_var_integer,   &
+        !              add_col_var_logical,   &
+        !              add_col_var_character, &
+        !              add_col_var_complex
+
         generic,public :: append => add_col_real, add_col_integer, add_col_logical,    &
                                     add_col_character, add_col_complex
         ! Public?
@@ -251,11 +267,14 @@ contains
 
     end function df_get_num_cols_complex
 
-    pure function df_get_num_rows(this) result(num_rows)
+    pure function df_get_num_rows(this,ind) result(num_rows)
         class(data_frame),intent(in) :: this
+        integer,intent(in) :: ind
         integer :: num_rows
 
-        num_rows = this%col_size
+        if (ind > this%ncols()) error stop 'ind out of range of cols'
+
+        num_rows = this%col_lens(ind)
 
     end function df_get_num_rows
 
@@ -309,6 +328,32 @@ contains
 
     end subroutine add_type_loc
 
+
+! ~~~~ Add col_len
+
+    subroutine add_col_len(this,col_len)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: col_len
+
+        if (.not. allocated(this%col_lens)) then
+            allocate(this%col_lens(1))
+            this%col_lens(1) = col_len
+
+            return
+        end if
+
+        block
+            integer :: num_cols
+            integer,dimension(size(this%col_lens,dim=1)+1) :: new_lens
+
+            num_cols = size(this%col_lens)
+
+            new_lens(:num_cols) = this%col_lens
+            new_lens(num_cols+1) = col_len
+            this%col_lens = new_lens
+        end block
+
+    end subroutine add_col_len
 
 
 ! ~~~~ Add Column to DF
@@ -622,6 +667,246 @@ contains
         end if
 
     end subroutine add_col_complex
+
+! ~~~~ Add col to variable len DF
+
+    subroutine add_col_var_real(this,col,header)
+        class(data_frame),intent(inout) :: this
+        real(rk),dimension(:),intent(in) :: col
+        character(len=*),intent(in),optional :: header
+
+        integer :: col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%col_size < 0) then
+            if (present(header)) then
+                call this%add_col_real(col,header)
+                call this%add_col_len(col_len)
+            else
+                call this%add_col_real(col)
+                call this%add_col_len(col_len)
+            end if
+
+            return
+        end if
+
+        if (col_len > this%rrows_max) call this%stretch_cols_real(col_len)
+
+        if (present(header)) then
+            call this%add_col_real(col,header)
+            call this%add_col_len(col_len)
+        else
+            call this%add_col_real(col)
+            call this%add_col_len(col_len)
+        end if
+
+    end subroutine add_col_var_real
+
+    subroutine add_col_var_integer(this,col,header)
+        class(data_frame),intent(inout) :: this
+        integer(ik),dimension(:),intent(in) :: col
+        character(len=*),intent(in),optional :: header
+
+        integer :: col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%col_size < 0) then
+            if (present(header)) then
+                call this%add_col_integer(col,header)
+                call this%add_col_len(col_len)
+            else
+                call this%add_col_integer(col)
+                call this%add_col_len(col_len)
+            end if
+
+            return
+        end if
+
+        if (col_len > this%irows_max) call this%stretch_cols_integer(col_len)
+
+        if (present(header)) then
+            call this%add_col_integer(col,header)
+            call this%add_col_len(col_len)
+        else
+            call this%add_col_integer(col)
+            call this%add_col_len(col_len)
+        end if
+
+    end subroutine add_col_var_integer
+
+    subroutine add_col_var_logical(this,col,header)
+        class(data_frame),intent(inout) :: this
+        logical,dimension(:),intent(in) :: col
+        character(len=*),intent(in),optional :: header
+
+        integer :: col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%col_size < 0) then
+            if (present(header)) then
+                call this%add_col_logical(col,header)
+                call this%add_col_len(col_len)
+            else
+                call this%add_col_logical(col)
+                call this%add_col_len(col_len)
+            end if
+
+            return
+        end if
+
+        if (col_len > this%lrows_max) call this%stretch_cols_logical(col_len)
+
+        if (present(header)) then
+            call this%add_col_logical(col,header)
+            call this%add_col_len(col_len)
+        else
+            call this%add_col_logical(col)
+            call this%add_col_len(col_len)
+        end if
+
+    end subroutine add_col_var_logical
+
+    subroutine add_col_var_character(this,col,header)
+        class(data_frame),intent(inout) :: this
+        character(len=this%max_char_len),dimension(:),intent(in) :: col
+        character(len=*),intent(in),optional :: header
+
+        integer :: col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%col_size < 0) then
+            if (present(header)) then
+                call this%add_col_character(col,header)
+                call this%add_col_len(col_len)
+            else
+                call this%add_col_character(col)
+                call this%add_col_len(col_len)
+            end if
+
+            return
+        end if
+
+        if (col_len > this%chrows_max) call this%stretch_cols_character(col_len)
+
+        if (present(header)) then
+            call this%add_col_character(col,header)
+            call this%add_col_len(col_len)
+        else
+            call this%add_col_character(col)
+            call this%add_col_len(col_len)
+        end if
+
+    end subroutine add_col_var_character
+
+    subroutine add_col_var_complex(this,col,header)
+        class(data_frame),intent(inout) :: this
+        complex(rk),dimension(:),intent(in) :: col
+        character(len=*),intent(in),optional :: header
+
+        integer :: col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%col_size < 0) then
+            if (present(header)) then
+                call this%add_col_complex(col,header)
+                call this%add_col_len(col_len)
+            else
+                call this%add_col_complex(col)
+                call this%add_col_len(col_len)
+            end if
+
+            return
+        end if
+
+        if (col_len > this%crows_max) call this%stretch_cols_complex(col_len)
+
+        if (present(header)) then
+            call this%add_col_complex(col,header)
+            call this%add_col_len(col_len)
+        else
+            call this%add_col_complex(col)
+            call this%add_col_len(col_len)
+        end if
+
+    end subroutine add_col_var_complex
+
+! ~~~~ Stretch array holding cols
+
+    subroutine stretch_cols_real(this,new_size)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: new_size
+
+        real(rk),dimension(new_size,this%rcols) :: new_rdata
+
+        if (new_size < this%rrows_max) error stop 'attempt to allocate fewer rows than previous'
+
+        new_rdata(:this%rrows_max,:) = this%rdata
+        this%rdata = new_rdata
+        this%rrows_max = new_size
+
+    end subroutine stretch_cols_real
+
+    subroutine stretch_cols_integer(this,new_size)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: new_size
+
+        integer(ik),dimension(new_size,this%icols) :: new_idata
+
+        if (new_size < this%irows_max) error stop 'attempt to allocate fewer rows than previous'
+
+        new_idata(:this%irows_max,:) = this%idata
+        this%idata = new_idata
+        this%irows_max = new_size
+
+    end subroutine stretch_cols_integer
+
+    subroutine stretch_cols_logical(this,new_size)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: new_size
+
+        logical,dimension(new_size,this%lcols) :: new_ldata
+
+        if (new_size < this%lrows_max) error stop 'attempt to allocate fewer rows than previous'
+
+        new_ldata(:this%lrows_max,:) = this%ldata
+        this%ldata = new_ldata
+        this%lrows_max = new_size
+
+    end subroutine stretch_cols_logical
+
+    subroutine stretch_cols_character(this,new_size)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: new_size
+
+        character(this%max_char_len),dimension(new_size,this%chcols) :: new_chdata
+
+        if (new_size < this%chrows_max) error stop 'attempt to allocate fewer rows than previous'
+
+        new_chdata(:this%chrows_max,:) = this%chdata
+        this%chdata = new_chdata
+        this%chrows_max = new_size
+
+    end subroutine stretch_cols_character
+
+    subroutine stretch_cols_complex(this,new_size)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: new_size
+
+        complex(rk),dimension(new_size,this%ccols) :: new_cdata
+
+        if (new_size < this%crows_max) error stop 'attempt to allocate fewer rows than previous'
+
+        new_cdata(:this%crows_max,:) = this%cdata
+        this%cdata = new_cdata
+        this%crows_max = new_size
+
+    end subroutine stretch_cols_complex
+
 
 ! ~~~~ Add empty Col to DF
 
