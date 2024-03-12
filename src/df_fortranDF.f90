@@ -43,6 +43,11 @@ module df_fortranDF
 
         procedure,public :: ncols => df_get_num_cols
         procedure,public :: nrows => df_get_num_rows
+        procedure,public :: nreal_cols => df_get_num_cols_real
+        procedure,public :: ninteger_cols => df_get_num_cols_integer
+        procedure,public :: nlogical_cols => df_get_num_cols_logical
+        procedure,public :: ncharacter_cols => df_get_num_cols_character
+        procedure,public :: ncomplex_cols => df_get_num_cols_complex
 
         procedure :: df_get_col_type_header, df_get_col_type_index
         generic,public :: dtype => df_get_col_type_header, df_get_col_type_index
@@ -204,6 +209,47 @@ contains
         n = this%n
 
     end function df_get_num_cols
+
+
+    pure function df_get_num_cols_real(this) result(ncols)
+        class(data_frame),intent(in) :: this
+        integer :: ncols
+
+        ncols = this%rcols
+
+    end function df_get_num_cols_real
+
+    pure function df_get_num_cols_integer(this) result(ncols)
+        class(data_frame),intent(in) :: this
+        integer :: ncols
+
+        ncols = this%icols
+
+    end function df_get_num_cols_integer
+
+    pure function df_get_num_cols_logical(this) result(ncols)
+        class(data_frame),intent(in) :: this
+        integer :: ncols
+
+        ncols = this%lcols
+
+    end function df_get_num_cols_logical
+
+    pure function df_get_num_cols_character(this) result(ncols)
+        class(data_frame),intent(in) :: this
+        integer :: ncols
+
+        ncols = this%chcols
+
+    end function df_get_num_cols_character
+
+    pure function df_get_num_cols_complex(this) result(ncols)
+        class(data_frame),intent(in) :: this
+        integer :: ncols
+
+        ncols = this%ccols
+
+    end function df_get_num_cols_complex
 
     pure function df_get_num_rows(this) result(num_rows)
         class(data_frame),intent(in) :: this

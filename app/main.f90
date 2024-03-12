@@ -19,7 +19,8 @@ program main
 
     print*, "get column 'value': ", df%getr("value")
     print*, "get column 1: ", df%geti(1)
-
+    print*, "num real cols:    ", df%nreal_cols()
+    print*, "num integer cols: ", df%nreal_cols()
 
     call df%destroy()
 
