@@ -2,7 +2,7 @@ module df_fortranDF
     use,intrinsic :: iso_fortran_env, only: STD_OUT => output_unit
     use df_precision
     use df_types
-    use df_column_class
+    !use df_column_class
     use df_utils
     use split_mod
     implicit none
@@ -23,7 +23,15 @@ module df_fortranDF
         integer :: n, col_size, max_char_len
         logical :: with_headers
         character(len=:),dimension(:),allocatable :: headers
-        type(column),dimension(:),allocatable :: data_cols 
+
+        integer,dimension(:,:),allocatable :: type_loc
+
+        integer :: rcols, icols, lcols, chcols, ccols
+        real(rk),dimension(:,:),allocatable :: rdata
+        integer(ik),dimension(:,:),allocatable :: idata
+        logical,dimension(:,:),allocatable :: ldata
+        character(len=:),dimension(:,:),allocatable :: chdata
+        complex(rk),dimension(:,:),allocatable :: cdata
 
         logical :: initialized = .false.
 
@@ -38,6 +46,8 @@ module df_fortranDF
 
         procedure :: df_get_col_type_header, df_get_col_type_index
         generic,public :: dtype => df_get_col_type_header, df_get_col_type_index
+
+        procedure :: add_type_loc
 
         procedure :: already_header
         procedure :: add_col_real,      &
@@ -145,6 +155,11 @@ contains
         end if
 
         this%n = 0
+        this%rcols = 0
+        this%icols = 0
+        this%lcols = 0
+        this%chcols = 0
+        this%ccols = 0
         this%col_size = -1  ! indicate no col_size
 
     end subroutine
@@ -155,18 +170,25 @@ contains
     subroutine df_destructor(this)
         class(data_frame),intent(inout) :: this
 
-        integer :: i
+        if (allocated(this%rdata)) deallocate(this%rdata)
+        if (allocated(this%idata)) deallocate(this%idata)
+        if (allocated(this%ldata)) deallocate(this%ldata)
+        if (allocated(this%chdata)) deallocate(this%chdata)
+        if (allocated(this%cdata)) deallocate(this%cdata)
 
-        do i=1,this%n
-            call this%data_cols(i)%destroy()
-        end do
-
-        if (this%n >= 1) deallocate(this%data_cols)
+        if (allocated(this%type_loc)) deallocate(this%type_loc)
 
         if (allocated(this%headers)) deallocate(this%headers)
 
         this%n = 0
         this%col_size = -1
+        this%rcols = 0
+        this%icols = 0
+        this%lcols = 0
+        this%chcols = 0
+        this%ccols = 0
+
+        this%max_char_len = 0
 
         this%initialized = .false.
 
@@ -206,7 +228,7 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        dtype = this%data_cols(ind)%dtype
+        dtype = this%type_loc(ind,1)
 
     end function df_get_col_type_header
 
@@ -215,9 +237,31 @@ contains
         integer,intent(in) :: j
         integer :: dtype
 
-        dtype = this%data_cols(j)%dtype
+        dtype = this%type_loc(j,1)
 
     end function df_get_col_type_index
+
+
+! ~~~~ add type_loc
+
+    subroutine add_type_loc(this,dtype,loc)
+        class(data_frame),intent(inout) :: this
+        integer,intent(in) :: dtype, loc
+
+        integer,dimension(:,:),allocatable :: type_loc_tmp
+
+        if (this%n > 0) then
+            allocate(type_loc_tmp(this%n+1,2))
+            type_loc_tmp(1:this%n,:) = this%type_loc
+            type_loc_tmp(this%n+1,:) = [dtype,loc]
+            this%type_loc = type_loc_tmp
+        else
+            allocate(this%type_loc(1,2))
+            this%type_loc(1,:) = [dtype,loc]
+        end if
+
+
+    end subroutine add_type_loc
 
 
 
@@ -228,9 +272,9 @@ contains
         real(rk),dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        real(rk),dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n, rcols
 
         if (.not. this%initialized) call this%new()
 
@@ -241,12 +285,20 @@ contains
         end if
 
         n = this%n
+        rcols = this%rcols
         if (n > 0) then
+            call this%add_type_loc(REAL_NUM,rcols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%new(col)
-            this%data_cols = new_cols
+            this%rcols = rcols + 1
+            if (rcols > 0) then
+                allocate(new_cols(this%col_size,rcols+1))
+                new_cols(:,1:rcols) = this%rdata
+                new_cols(:,rcols+1) = col
+                this%rdata = new_cols
+            else
+                allocate(this%rdata(this%col_size,1))
+                this%rdata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -261,9 +313,11 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(REAL_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%new(col)
+            this%rcols = 1
+            allocate(this%rdata(this%col_size,1))
+            this%rdata(:,1) = col
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -280,9 +334,9 @@ contains
         integer(ik),dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        integer(ik),dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n, icols
 
         if (.not. this%initialized) call this%new()
 
@@ -293,12 +347,20 @@ contains
         end if
 
         n = this%n
+        icols = this%icols
         if (n > 0) then
+            call this%add_type_loc(INTEGER_NUM,icols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%new(col)
-            this%data_cols = new_cols
+            this%icols = icols + 1
+            if (icols > 0) then
+                allocate(new_cols(this%col_size,icols+1))
+                new_cols(:,1:icols) = this%idata
+                new_cols(:,icols+1) = col
+                this%idata = new_cols
+            else
+                allocate(this%idata(this%col_size,1))
+                this%idata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -313,9 +375,11 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(INTEGER_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%new(col)
+            this%icols = 1
+            allocate(this%idata(this%col_size,1))
+            this%idata(:,1) = col
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -332,9 +396,9 @@ contains
         logical,dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        logical,dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n, lcols
 
         if (.not. this%initialized) call this%new()
 
@@ -345,12 +409,20 @@ contains
         end if
 
         n = this%n
+        lcols = this%lcols
         if (n > 0) then
+            call this%add_type_loc(LOGICAL_NUM,lcols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%new(col)
-            this%data_cols = new_cols
+            this%lcols = lcols + 1
+            if (lcols > 0) then
+                allocate(new_cols(this%col_size,lcols+1))
+                new_cols(:,1:lcols) = this%ldata
+                new_cols(:,lcols+1) = col
+                this%ldata = new_cols
+            else
+                allocate(this%ldata(this%col_size,1))
+                this%ldata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -365,9 +437,11 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(LOGICAL_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%new(col)
+            this%lcols = 1
+            allocate(this%ldata(this%col_size,1))
+            this%ldata(:,1) = col
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -384,9 +458,9 @@ contains
         character(len=*),dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        character(len=:),dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n,chcols
 
         if (.not. this%initialized) call this%new()
 
@@ -397,12 +471,20 @@ contains
         end if
 
         n = this%n
+        chcols = this%chcols
         if (n > 0) then
+            call this%add_type_loc(CHARACTER_NUM,chcols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%new(col)
-            this%data_cols = new_cols
+            this%chcols = chcols + 1
+            if (chcols > 0) then
+                allocate(character(this%max_char_len) :: new_cols(this%col_size,chcols+1))
+                new_cols(:,1:chcols) = this%chdata
+                new_cols(:,chcols+1) = col
+                this%chdata = new_cols
+            else
+                allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
+                this%chdata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -417,9 +499,11 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(CHARACTER_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%new(col)
+            this%chcols = 1
+            allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
+            this%chdata(:,1) = col
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -436,9 +520,9 @@ contains
         complex(rk),dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        complex(rk),dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n, ccols
 
         if (.not. this%initialized) call this%new()
 
@@ -449,12 +533,20 @@ contains
         end if
 
         n = this%n
+        ccols = this%ccols
         if (n > 0) then
+            call this%add_type_loc(COMPLEX_NUM,ccols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%new(col)
-            this%data_cols = new_cols
+            this%ccols = ccols + 1
+            if (ccols > 0) then
+                allocate(new_cols(this%col_size,ccols+1))
+                new_cols(:,1:ccols) = this%cdata
+                new_cols(:,ccols+1) = col
+                this%cdata = new_cols
+            else
+                allocate(this%cdata(this%col_size,1))
+                this%cdata(:,1) = col
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -469,9 +561,11 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(COMPLEX_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%new(col)
+            this%ccols = 1
+            allocate(this%cdata(this%col_size,1))
+            this%cdata(:,1) = col
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -490,9 +584,9 @@ contains
         integer,intent(in) :: col_size
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        real(rk),dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n,rcols
 
 
         if (.not. this%initialized) call this%new()
@@ -504,12 +598,18 @@ contains
         end if
 
         n = this%n
+        rcols = this%rcols
         if (n > 0) then
+            call this%add_type_loc(REAL_NUM,rcols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%emptyr(this%col_size)
-            this%data_cols = new_cols
+            this%rcols = rcols + 1
+            if (rcols > 0) then
+                allocate(new_cols(this%col_size,rcols+1))
+                new_cols(:,1:rcols) = this%rdata
+                this%rdata = new_cols
+            else
+                allocate(this%rdata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -524,9 +624,10 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(REAL_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%emptyr(this%col_size)
+            this%rcols = 1
+            allocate(this%rdata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -543,9 +644,9 @@ contains
         integer,intent(in) :: col_size
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        integer(ik),dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n, icols
 
 
         if (.not. this%initialized) call this%new()
@@ -557,12 +658,18 @@ contains
         end if
 
         n = this%n
+        icols = this%icols
         if (n > 0) then
+            call this%add_type_loc(INTEGER_NUM,icols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%emptyi(this%col_size)
-            this%data_cols = new_cols
+            this%icols = icols + 1
+            if (icols > 0) then
+                allocate(new_cols(this%col_size,icols+1))
+                new_cols(:,1:icols) = this%idata
+                this%idata = new_cols
+            else
+                allocate(this%idata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -577,9 +684,10 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(INTEGER_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%emptyi(this%col_size)
+            this%icols = 1
+            allocate(this%idata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -596,9 +704,9 @@ contains
         integer,intent(in) :: col_size
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        logical,dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n, lcols
 
 
         if (.not. this%initialized) call this%new()
@@ -610,12 +718,18 @@ contains
         end if
 
         n = this%n
+        lcols = this%lcols
         if (n > 0) then
+            call this%add_type_loc(LOGICAL_NUM,lcols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%emptyl(this%col_size)
-            this%data_cols = new_cols
+            this%lcols = lcols + 1
+            if (lcols > 0) then
+                allocate(new_cols(this%col_size,lcols+1))
+                new_cols(:,1:lcols) = this%ldata
+                this%ldata = new_cols
+            else
+                allocate(this%ldata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -630,9 +744,10 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(LOGICAL_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%emptyl(this%col_size)
+            this%lcols = 1
+            allocate(this%ldata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -649,9 +764,9 @@ contains
         integer,intent(in) :: col_size
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        character(len=:),dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n, chcols
 
 
         if (.not. this%initialized) call this%new()
@@ -663,12 +778,18 @@ contains
         end if
 
         n = this%n
+        chcols = this%chcols
         if (n > 0) then
+            call this%add_type_loc(CHARACTER_NUM,chcols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%emptych(this%col_size)
-            this%data_cols = new_cols
+            this%chcols = chcols + 1
+            if (chcols > 0) then
+                allocate(character(this%max_char_len) :: new_cols(this%col_size,chcols+1))
+                new_cols(:,1:chcols) = this%chdata
+                this%chdata = new_cols
+            else
+                allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -683,9 +804,10 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(CHARACTER_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%emptych(this%col_size)
+            this%chcols = 1
+            allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -702,9 +824,9 @@ contains
         integer,intent(in) :: col_size
         character(len=*),intent(in),optional :: header
 
-        type(column),dimension(:),allocatable :: new_cols
+        complex(rk),dimension(:,:),allocatable :: new_cols
         character(len=:),dimension(:),allocatable :: new_headers
-        integer :: n
+        integer :: n, ccols
 
 
         if (.not. this%initialized) call this%new()
@@ -716,12 +838,18 @@ contains
         end if
 
         n = this%n
+        ccols = this%ccols
         if (n > 0) then
+            call this%add_type_loc(COMPLEX_NUM,ccols+1)
             this%n = n + 1
-            allocate(new_cols(n+1))
-            new_cols(1:n) = this%data_cols
-            call new_cols(n+1)%emptyc(this%col_size)
-            this%data_cols = new_cols
+            this%ccols = ccols + 1
+            if (ccols > 0) then
+                allocate(new_cols(this%col_size,ccols+1))
+                new_cols(:,1:ccols) = this%cdata
+                this%cdata = new_cols
+            else
+                allocate(this%cdata(this%col_size,1))
+            end if
             if (present(header)) then
                 if (this%with_headers) then
                     if (this%already_header(header)) error stop 'all headers must be unique'
@@ -736,9 +864,10 @@ contains
                 if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
+            call this%add_type_loc(COMPLEX_NUM,1)
             this%n = 1
-            allocate(this%data_cols(1))
-            call this%data_cols(1)%emptyc(this%col_size)
+            this%ccols = 1
+            allocate(this%cdata(this%col_size,1))
             if (present(header)) then
                 allocate(character(this%max_char_len) :: this%headers(1))
                 this%headers(1) = header
@@ -778,7 +907,12 @@ contains
         integer,intent(in) :: i
         real(rk),dimension(this%col_size) :: col
 
-        col = this%data_cols(i)%getr()
+        integer :: ind
+
+        if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
+        ind = this%type_loc(i,2)
+
+        col = this%rdata(:,ind)
 
     end function df_get_col_ind_real
 
@@ -787,7 +921,12 @@ contains
         integer,intent(in) :: i
         integer(ik),dimension(this%col_size) :: col
 
-        col = this%data_cols(i)%geti()
+        integer :: ind
+
+        if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        ind = this%type_loc(i,2)
+
+        col = this%idata(:,ind)
 
     end function df_get_col_ind_integer
 
@@ -796,7 +935,12 @@ contains
         integer,intent(in) :: i
         logical,dimension(this%col_size) :: col
 
-        col = this%data_cols(i)%getl()
+        integer :: ind
+
+        if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        ind = this%type_loc(i,2)
+
+        col = this%ldata(:,ind)
 
     end function df_get_col_ind_logical
 
@@ -805,7 +949,12 @@ contains
         integer,intent(in) :: i
         character(len=:),dimension(:),allocatable :: col
 
-        col = this%data_cols(i)%getch()
+        integer :: ind
+
+        if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        ind = this%type_loc(i,2)
+
+        col = this%chdata(:,ind)
 
     end function df_get_col_ind_character
 
@@ -814,7 +963,12 @@ contains
         integer,intent(in) :: i
         complex(rk),dimension(this%col_size) :: col
 
-        col = this%data_cols(i)%getc()
+        integer :: ind
+
+        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        ind = this%type_loc(i,2)
+
+        col = this%cdata(:,ind)
 
     end function df_get_col_ind_complex
 
@@ -826,7 +980,7 @@ contains
         character(len=*),intent(in) :: header
         real(rk),dimension(this%col_size) :: col
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -836,7 +990,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        col = this%data_cols(ind)%getr()
+        if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_index = this%type_loc(ind,2)
+        col = this%rdata(:,data_index)
 
     end function df_get_col_header_real
 
@@ -845,7 +1001,7 @@ contains
         character(len=*),intent(in) :: header
         integer(ik),dimension(this%col_size) :: col
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -855,7 +1011,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        col = this%data_cols(ind)%geti()
+        if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_index = this%type_loc(ind,2)
+        col = this%idata(:,data_index)
 
     end function df_get_col_header_integer
 
@@ -864,7 +1022,7 @@ contains
         character(len=*),intent(in) :: header
         logical,dimension(this%col_size) :: col
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -874,7 +1032,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        col = this%data_cols(ind)%getl()
+        if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_index = this%type_loc(ind,2)
+        col = this%ldata(:,data_index)
 
     end function df_get_col_header_logical
 
@@ -883,7 +1043,7 @@ contains
         character(len=*),intent(in) :: header
         character(len=:),dimension(:),allocatable :: col
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -893,7 +1053,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        col = this%data_cols(ind)%getch()
+        if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_index = this%type_loc(ind,2)
+        col = this%chdata(:,data_index)
 
     end function df_get_col_header_character
 
@@ -902,7 +1064,7 @@ contains
         character(len=*),intent(in) :: header
         complex(rk),dimension(this%col_size) :: col
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -912,7 +1074,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        col = this%data_cols(ind)%getc()
+        if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(ind,2)
+        col = this%cdata(:,data_index)
 
     end function df_get_col_header_complex
 
@@ -924,7 +1088,12 @@ contains
         integer,intent(in) :: i,j
         real(rk) :: val
 
-        val = this%data_cols(i)%getr(j)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
+        ind = this%type_loc(i,2)
+
+        val = this%rdata(j,ind)
 
     end function df_get_val_real
 
@@ -933,7 +1102,12 @@ contains
         integer,intent(in) :: i,j
         integer(ik) :: val
 
-        val = this%data_cols(i)%geti(j)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        ind = this%type_loc(i,2)
+
+        val = this%idata(j,ind)
 
     end function df_get_val_integer
     
@@ -942,7 +1116,12 @@ contains
         integer,intent(in) :: i,j
         logical :: val
 
-        val = this%data_cols(i)%getl(j)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        ind = this%type_loc(i,2)
+
+        val = this%ldata(j,ind)
 
     end function df_get_val_logical
 
@@ -951,7 +1130,12 @@ contains
         integer,intent(in) :: i,j
         character(len=:),allocatable :: val
 
-        val = this%data_cols(i)%getch(j)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        ind = this%type_loc(i,2)
+
+        val = this%chdata(j,ind)
 
     end function df_get_val_character
 
@@ -960,7 +1144,12 @@ contains
         integer,intent(in) :: i,j
         complex(rk) :: val
 
-        val = this%data_cols(i)%getc(j)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        ind = this%type_loc(i,2)
+
+        val = this%cdata(j,ind)
 
     end function df_get_val_complex
 
@@ -973,7 +1162,7 @@ contains
         integer,intent(in) :: j
         real(rk) :: val
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -983,7 +1172,10 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        val = this%data_cols(ind)%getr(j)
+        if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_index = this%type_loc(ind,2)
+        val = this%rdata(j,data_index)
+
 
     end function df_get_val_header_real
 
@@ -993,7 +1185,7 @@ contains
         integer,intent(in) :: j
         integer(ik) :: val
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1003,7 +1195,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        val = this%data_cols(ind)%geti(j)
+        if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_index = this%type_loc(ind,2)
+        val = this%idata(j,data_index)
 
     end function df_get_val_header_integer
 
@@ -1013,7 +1207,7 @@ contains
         integer,intent(in) :: j
         logical :: val
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1023,7 +1217,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        val = this%data_cols(ind)%getl(j)
+        if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_index = this%type_loc(ind,2)
+        val = this%ldata(j,data_index)
 
     end function df_get_val_header_logical
 
@@ -1033,7 +1229,7 @@ contains
         integer,intent(in) :: j
         character(len=:),allocatable :: val
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1043,7 +1239,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        val = this%data_cols(ind)%getch(j)
+        if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_index = this%type_loc(ind,2)
+        val = this%chdata(j,data_index)
 
     end function df_get_val_header_character
 
@@ -1053,7 +1251,7 @@ contains
         integer,intent(in) :: j
         complex(rk) :: val
 
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1063,7 +1261,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        val = this%data_cols(ind)%getc(j)
+        if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(ind,2)
+        val = this%cdata(j,data_index)
 
     end function df_get_val_header_complex
 
@@ -1075,7 +1275,12 @@ contains
         integer,intent(in) :: i,j
         real(rk),intent(in) :: val
 
-        call this%data_cols(i)%changer(j,val)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
+        ind = this%type_loc(i,2)
+
+        this%rdata(j,ind) = val
 
     end subroutine df_change_single_indices_real
 
@@ -1084,7 +1289,12 @@ contains
         integer,intent(in) :: i,j
         integer(ik),intent(in) :: val
 
-        call this%data_cols(i)%changei(j,val)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        ind = this%type_loc(i,2)
+
+        this%idata(j,ind) = val
 
     end subroutine df_change_single_indices_integer
 
@@ -1093,7 +1303,12 @@ contains
         integer,intent(in) :: i,j
         logical,intent(in) :: val
 
-        call this%data_cols(i)%changel(j,val)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        ind = this%type_loc(i,2)
+
+        this%ldata(j,ind) = val
 
     end subroutine df_change_single_indices_logical
 
@@ -1102,7 +1317,12 @@ contains
         integer,intent(in) :: i,j
         character(len=*),intent(in) :: val
 
-        call this%data_cols(i)%changech(j,val)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        ind = this%type_loc(i,2)
+
+        this%chdata(j,ind) = val
 
     end subroutine df_change_single_indices_character
 
@@ -1111,7 +1331,12 @@ contains
         integer,intent(in) :: i,j
         complex(rk),intent(in) :: val
 
-        call this%data_cols(i)%changec(j,val)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        ind = this%type_loc(i,2)
+
+        this%cdata(j,ind) = val
 
     end subroutine df_change_single_indices_complex
 
@@ -1124,7 +1349,7 @@ contains
         integer,intent(in) :: j
         real(rk),intent(in) :: val
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1134,7 +1359,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%changer(j,val)
+        if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_index = this%type_loc(ind,2)
+        this%rdata(j,data_index) = val
 
     end subroutine df_change_single_header_real
 
@@ -1144,7 +1371,7 @@ contains
         integer,intent(in) :: j
         integer(ik),intent(in) :: val
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1154,7 +1381,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%changei(j,val)
+        if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_index = this%type_loc(ind,2)
+        this%idata(j,data_index) = val
 
     end subroutine df_change_single_header_integer
 
@@ -1164,7 +1393,7 @@ contains
         integer,intent(in) :: j
         logical,intent(in) :: val
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1174,7 +1403,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%changel(j,val)
+        if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_index = this%type_loc(ind,2)
+        this%ldata(j,data_index) = val
 
     end subroutine df_change_single_header_logical
 
@@ -1184,7 +1415,7 @@ contains
         integer,intent(in) :: j
         character(len=*),intent(in) :: val
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1194,7 +1425,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%changech(j,val)
+        if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_index = this%type_loc(ind,2)
+        this%chdata(j,data_index) = val
 
     end subroutine df_change_single_header_character
 
@@ -1204,7 +1437,7 @@ contains
         integer,intent(in) :: j
         complex(rk),intent(in) :: val
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1214,7 +1447,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%changec(j,val)
+        if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(ind,2)
+        this%cdata(j,data_index) = val
 
     end subroutine df_change_single_header_complex
 
@@ -1226,7 +1461,12 @@ contains
         integer,intent(in) :: i
         real(rk),dimension(this%col_size) :: col
 
-        call this%data_cols(i)%new(col)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
+        ind = this%type_loc(i,2)
+
+        this%rdata(:,ind) = col
 
     end subroutine df_change_col_index_real
 
@@ -1235,7 +1475,12 @@ contains
         integer,intent(in) :: i
         integer(ik),dimension(this%col_size) :: col
 
-        call this%data_cols(i)%new(col)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        ind = this%type_loc(i,2)
+
+        this%idata(:,ind) = col
 
     end subroutine df_change_col_index_integer
 
@@ -1244,18 +1489,26 @@ contains
         integer,intent(in) :: i
         logical,dimension(this%col_size) :: col
 
-        call this%data_cols(i)%new(col)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        ind = this%type_loc(i,2)
+
+        this%ldata(:,ind) = col
 
     end subroutine df_change_col_index_logical
 
     subroutine df_change_col_index_character(this,i,col)
         class(data_frame),intent(inout) :: this
         integer,intent(in) :: i
-        character(len=*),dimension(:),allocatable :: col
+        character(len=this%max_char_len),dimension(this%col_size) :: col
 
-        if (size(col,dim=1) > this%col_size) error stop 'Different size columns in add col to data_frame'
+        integer :: ind
 
-        call this%data_cols(i)%new(col)
+        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        ind = this%type_loc(i,2)
+
+        this%chdata(:,ind) = col
 
     end subroutine df_change_col_index_character
 
@@ -1264,7 +1517,12 @@ contains
         integer,intent(in) :: i
         complex(rk),dimension(this%col_size) :: col
 
-        call this%data_cols(i)%new(col)
+        integer :: ind
+
+        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        ind = this%type_loc(i,2)
+
+        this%cdata(:,ind) = col
 
     end subroutine df_change_col_index_complex
 
@@ -1276,7 +1534,7 @@ contains
         character(len=*),intent(in) :: header
         real(rk),dimension(this%col_size),intent(in) :: col
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1286,7 +1544,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%new(col)
+        if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_index = this%type_loc(ind,2)
+        this%rdata(:,data_index) = col
 
     end subroutine df_change_col_header_real
 
@@ -1295,7 +1555,7 @@ contains
         character(len=*),intent(in) :: header
         integer(ik),dimension(this%col_size),intent(in) :: col
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1305,7 +1565,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%new(col)
+        if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_index = this%type_loc(ind,2)
+        this%idata(:,data_index) = col
 
     end subroutine df_change_col_header_integer
 
@@ -1314,7 +1576,7 @@ contains
         character(len=*),intent(in) :: header
         logical,dimension(this%col_size),intent(in) :: col
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1324,16 +1586,18 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%new(col)
+        if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_index = this%type_loc(ind,2)
+        this%ldata(:,data_index) = col
 
     end subroutine df_change_col_header_logical
 
     subroutine df_change_col_header_character(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        character(len=*),dimension(:),intent(in) :: col
+        character(len=this%max_char_len),dimension(this%col_size),intent(in) :: col
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1345,7 +1609,9 @@ contains
 
         if (size(col,dim=1) > this%col_size) error stop 'Different size columns in add col to data_frame'
 
-        call this%data_cols(ind)%new(col)
+        if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_index = this%type_loc(ind,2)
+        this%chdata(:,data_index) = col
 
     end subroutine df_change_col_header_character
 
@@ -1354,7 +1620,7 @@ contains
         character(len=*),intent(in) :: header
         complex(rk),dimension(this%col_size),intent(in) :: col
         
-        integer :: ind
+        integer :: ind, data_index
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1364,7 +1630,9 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        call this%data_cols(ind)%new(col)
+        if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(ind,2)
+        this%cdata(:,data_index) = col
 
     end subroutine df_change_col_header_complex
 
@@ -1422,7 +1690,7 @@ contains
         end if
         do i=1,len_cols
             do j=1,num_cols
-                select case (this%data_cols(j)%dtype)
+                select case (this%type_loc(j,1))
                     case (REAL_NUM)
                         pfmt = "(a2,"//trim(adjustl(rfmt))//",a1)"
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getr(j,i), " "
@@ -1588,7 +1856,7 @@ contains
             end if
             split_line = split(line," ")
             do i=1,num_cols
-                select case (this%data_cols(i)%dtype)
+                select case (this%type_loc(i,1))
                 case (REAL_NUM)
                     read(split_line(i),fmt=*) rval
                     call this%setr(i,line_ind+offset,rval)

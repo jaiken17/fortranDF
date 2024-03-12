@@ -2,7 +2,7 @@ program main
     use df_utils
     use df_types
     use df_precision
-    use df_fortranDF_new
+    use df_fortranDF
     implicit none
 
     type(data_frame) :: df
