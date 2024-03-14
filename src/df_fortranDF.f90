@@ -1893,70 +1893,110 @@ contains
     subroutine df_change_col_index_real(this,i,col)
         class(data_frame),intent(inout) :: this
         integer,intent(in) :: i
-        real(rk),dimension(this%col_size) :: col
+        real(rk),dimension(:),intent(in) :: col
 
-        integer :: ind
+        integer :: data_ind, col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
-        ind = this%type_loc(i,2)
+        data_ind = this%type_loc(i,2)
 
-        this%rdata(:,ind) = col
+        if ((.not. this%enforce_length) .and. col_len > this%rrows_max) call this%stretch_cols_real(col_len)
+        this%rdata(:col_len,data_ind) = col
+        if (.not. this%enforce_length) this%col_lens(i) = col_len
 
     end subroutine df_change_col_index_real
 
     subroutine df_change_col_index_integer(this,i,col)
         class(data_frame),intent(inout) :: this
         integer,intent(in) :: i
-        integer(ik),dimension(this%col_size) :: col
+        integer(ik),dimension(:),intent(in) :: col
 
-        integer :: ind
+        integer :: data_ind, col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
-        ind = this%type_loc(i,2)
+        data_ind = this%type_loc(i,2)
 
-        this%idata(:,ind) = col
+        if ((.not. this%enforce_length) .and. col_len > this%irows_max) call this%stretch_cols_integer(col_len)
+        this%idata(:col_len,data_ind) = col
+        if (.not. this%enforce_length) this%col_lens(i) = col_len
 
     end subroutine df_change_col_index_integer
 
     subroutine df_change_col_index_logical(this,i,col)
         class(data_frame),intent(inout) :: this
         integer,intent(in) :: i
-        logical,dimension(this%col_size) :: col
+        logical,dimension(:),intent(in) :: col
 
-        integer :: ind
+        integer :: data_ind, col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
-        ind = this%type_loc(i,2)
+        data_ind = this%type_loc(i,2)
 
-        this%ldata(:,ind) = col
+        if ((.not. this%enforce_length) .and. col_len > this%lrows_max) call this%stretch_cols_logical(col_len)
+        this%ldata(:col_len,data_ind) = col
+        if (.not. this%enforce_length) this%col_lens(i) = col_len
 
     end subroutine df_change_col_index_logical
 
     subroutine df_change_col_index_character(this,i,col)
         class(data_frame),intent(inout) :: this
         integer,intent(in) :: i
-        character(len=this%max_char_len),dimension(this%col_size) :: col
+        character(len=*),dimension(:),intent(in) :: col
 
-        integer :: ind
+        integer :: data_ind, col_len
 
-        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
-        ind = this%type_loc(i,2)
+        col_len = size(col,dim=1)
 
-        this%chdata(:,ind) = col
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
+
+        if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_ind = this%type_loc(i,2)
+
+        if ((.not. this%enforce_length) .and. col_len > this%chrows_max) call this%stretch_cols_character(col_len)
+        this%chdata(:col_len,data_ind) = col
+        if (.not. this%enforce_length) this%col_lens(i) = col_len
 
     end subroutine df_change_col_index_character
 
     subroutine df_change_col_index_complex(this,i,col)
         class(data_frame),intent(inout) :: this
         integer,intent(in) :: i
-        complex(rk),dimension(this%col_size) :: col
+        complex(rk),dimension(:),intent(in) :: col
 
-        integer :: ind
+        integer :: data_ind, col_len
+
+        col_len = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
-        ind = this%type_loc(i,2)
+        data_ind = this%type_loc(i,2)
 
-        this%cdata(:,ind) = col
+        if ((.not. this%enforce_length) .and. col_len > this%crows_max) call this%stretch_cols_complex(col_len)
+        this%cdata(:col_len,data_ind) = col
+        if (.not. this%enforce_length) this%col_lens(i) = col_len
 
     end subroutine df_change_col_index_complex
 
@@ -1966,10 +2006,16 @@ contains
     subroutine df_change_col_header_real(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        real(rk),dimension(this%col_size),intent(in) :: col
+        real(rk),dimension(:),intent(in) :: col
         
-        integer :: ind, data_index
+        integer :: ind, data_index, col_len
         character(len=:),allocatable :: trunc_header
+
+        col_len  = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
 
@@ -1980,17 +2026,26 @@ contains
 
         if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
         data_index = this%type_loc(ind,2)
-        this%rdata(:,data_index) = col
+
+        if ((.not. this%enforce_length) .and. col_len > this%rrows_max) call this%stretch_cols_real(col_len)
+        this%rdata(:col_len,data_index) = col
+        if (.not. this%enforce_length) this%col_lens(ind) = col_len
 
     end subroutine df_change_col_header_real
 
     subroutine df_change_col_header_integer(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        integer(ik),dimension(this%col_size),intent(in) :: col
+        integer(ik),dimension(:),intent(in) :: col
         
-        integer :: ind, data_index
+        integer :: ind, data_index, col_len
         character(len=:),allocatable :: trunc_header
+
+        col_len  = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
 
@@ -2001,17 +2056,26 @@ contains
 
         if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
         data_index = this%type_loc(ind,2)
-        this%idata(:,data_index) = col
+
+        if ((.not. this%enforce_length) .and. col_len > this%irows_max) call this%stretch_cols_integer(col_len)
+        this%idata(:col_len,data_index) = col
+        if (.not. this%enforce_length) this%col_lens(ind) = col_len
 
     end subroutine df_change_col_header_integer
 
     subroutine df_change_col_header_logical(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        logical,dimension(this%col_size),intent(in) :: col
+        logical,dimension(:),intent(in) :: col
         
-        integer :: ind, data_index
+        integer :: ind, data_index, col_len
         character(len=:),allocatable :: trunc_header
+
+        col_len  = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
 
@@ -2022,17 +2086,26 @@ contains
 
         if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
         data_index = this%type_loc(ind,2)
-        this%ldata(:,data_index) = col
+
+        if ((.not. this%enforce_length) .and. col_len > this%lrows_max) call this%stretch_cols_logical(col_len)
+        this%ldata(:col_len,data_index) = col
+        if (.not. this%enforce_length) this%col_lens(ind) = col_len
 
     end subroutine df_change_col_header_logical
 
     subroutine df_change_col_header_character(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        character(len=this%max_char_len),dimension(this%col_size),intent(in) :: col
+        character(len=this%max_char_len),dimension(:),intent(in) :: col
         
-        integer :: ind, data_index
+        integer :: ind, data_index, col_len
         character(len=:),allocatable :: trunc_header
+
+        col_len  = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
 
@@ -2041,21 +2114,28 @@ contains
         ind = findloc(this%headers,trunc_header,dim=1)
         if (ind < 1) error stop 'header not present in data frame'
 
-        if (size(col,dim=1) > this%col_size) error stop 'Different size columns in add col to data_frame'
-
         if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
         data_index = this%type_loc(ind,2)
-        this%chdata(:,data_index) = col
+
+        if ((.not. this%enforce_length) .and. col_len > this%chrows_max) call this%stretch_cols_character(col_len)
+        this%chdata(:col_len,data_index) = col
+        if (.not. this%enforce_length) this%col_lens(ind) = col_len
 
     end subroutine df_change_col_header_character
 
     subroutine df_change_col_header_complex(this,header,col)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        complex(rk),dimension(this%col_size),intent(in) :: col
+        complex(rk),dimension(:),intent(in) :: col
         
-        integer :: ind, data_index
+        integer :: ind, data_index, col_len
         character(len=:),allocatable :: trunc_header
+
+        col_len  = size(col,dim=1)
+
+        if (this%enforce_length .and. (this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
 
@@ -2066,7 +2146,10 @@ contains
 
         if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
         data_index = this%type_loc(ind,2)
-        this%cdata(:,data_index) = col
+
+        if ((.not. this%enforce_length) .and. col_len > this%crows_max) call this%stretch_cols_complex(col_len)
+        this%cdata(:col_len,data_index) = col
+        if (.not. this%enforce_length) this%col_lens(ind) = col_len
 
     end subroutine df_change_col_header_complex
 
@@ -2089,6 +2172,21 @@ contains
         integer :: i, j
         integer :: num_cols, len_cols
 
+        real(rk) :: rval
+        integer(ik) :: ival
+        logical :: lval
+        character(len=this%max_char_len) :: chval
+        complex(rk) :: cval
+
+
+        real(rk),parameter :: rfill = 0.0_rk
+        integer(ik),parameter :: ifill = 0
+        logical,parameter :: lfill = .false.
+        character(len=this%max_char_len),parameter :: chfill = "null"
+        complex(rk),parameter :: cfill = 0.0_rk
+        logical :: outside_col
+
+
         if (present(unit)) then
             io_unit = unit
         else
@@ -2106,7 +2204,7 @@ contains
 
 
         num_cols = this%n
-        len_cols = this%col_size
+        len_cols = this%nrows_max
         
         call write_horiz()
         !call write_blank()
@@ -2127,16 +2225,24 @@ contains
                 select case (this%type_loc(j,1))
                     case (REAL_NUM)
                         pfmt = "(a2,"//trim(adjustl(rfmt))//",a1)"
-                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getr(j,i), " "
+                        rval = this%getr(j,i)
+                        if (i > this%rrows_max) rval = rfill
+                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", rval, " "
                     case (INTEGER_NUM)
                         pfmt = "(a2,"//trim(adjustl(ifmt))//",a1)"
-                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%geti(j,i), " "
+                        ival = this%geti(j,i)
+                        if (i > this%irows_max) ival = ifill
+                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", ival, " "
                     case (LOGICAL_NUM)
                         pfmt = "(a2,"//trim(adjustl(lfmt))//",a1)"
-                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", this%getl(j,i), " "
+                        lval = this%getl(j,i)
+                        if (i > this%lrows_max) lval = lfill
+                        write(io_unit,pfmt,iostat=io_err,advance='no') "| ", lval, " "
                     case (CHARACTER_NUM)
                         pfmt = "(a2,"//trim(adjustl(chfmt))//",a1)"
-                        output_char = trim(adjustl(this%getch(j,i)))
+                        chval = this%getch(j,i)
+                        if (i > this%chrows_max) chval = chfill
+                        output_char = trim(adjustl(chval))
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", adjustr(output_char), " "
                     case (COMPLEX_NUM)
                         error stop 'cannot print complex data type yet'
