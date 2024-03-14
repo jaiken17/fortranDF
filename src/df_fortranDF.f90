@@ -1269,85 +1269,118 @@ contains
 
 ! ~~~~ Get Column DF with index
 
-    pure function df_get_col_ind_real(this,i) result(col)
+    pure function df_get_col_ind_real(this,i,full) result(col)
         class(data_frame),intent(in) :: this
         integer,intent(in) :: i
-        real(rk),dimension(this%col_size) :: col
+        logical,intent(in),optional :: full ! return full column
+        real(rk),dimension(:),allocatable :: col
 
-        integer :: ind
+        integer :: ind, end
 
         if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
         ind = this%type_loc(i,2)
 
-        col = this%rdata(:,ind)
+        end = this%col_lens(i)
+        if (present(full)) then
+            if (full) end = this%rrows_max
+        end if
+
+        col = this%rdata(:end,ind)
 
     end function df_get_col_ind_real
 
-    pure function df_get_col_ind_integer(this,i) result(col)
+    pure function df_get_col_ind_integer(this,i,full) result(col)
         class(data_frame),intent(in) :: this
         integer,intent(in) :: i
-        integer(ik),dimension(this%col_size) :: col
+        logical,intent(in),optional :: full ! return full column
+        integer(ik),dimension(:),allocatable :: col
 
-        integer :: ind
+        integer :: ind, end
 
         if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
         ind = this%type_loc(i,2)
 
-        col = this%idata(:,ind)
+        end = this%col_lens(i)
+        if (present(full)) then
+            if (full) end = this%irows_max
+        end if
+
+        col = this%idata(:end,ind)
 
     end function df_get_col_ind_integer
 
-    pure function df_get_col_ind_logical(this,i) result(col)
+    pure function df_get_col_ind_logical(this,i,full) result(col)
         class(data_frame),intent(in) :: this
         integer,intent(in) :: i
-        logical,dimension(this%col_size) :: col
+        logical,intent(in),optional :: full ! return full column
+        logical,dimension(:),allocatable :: col
 
-        integer :: ind
+        integer :: ind, end
 
         if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
         ind = this%type_loc(i,2)
 
-        col = this%ldata(:,ind)
+        end = this%col_lens(i)
+        if (present(full)) then
+            if (full) end = this%lrows_max
+        end if
+
+        col = this%ldata(:end,ind)
 
     end function df_get_col_ind_logical
 
-    pure function df_get_col_ind_character(this,i) result(col)
+    pure function df_get_col_ind_character(this,i,full) result(col)
         class(data_frame),intent(in) :: this
         integer,intent(in) :: i
+        logical,intent(in),optional :: full ! return full column
         character(len=:),dimension(:),allocatable :: col
 
-        integer :: ind
+        integer :: ind, end
 
         if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
         ind = this%type_loc(i,2)
 
-        col = this%chdata(:,ind)
+        end = this%col_lens(i)
+        if (present(full)) then
+            if (full) end = this%chrows_max
+        end if
+
+        col = this%chdata(:end,ind)
 
     end function df_get_col_ind_character
 
-    pure function df_get_col_ind_complex(this,i) result(col)
+    pure function df_get_col_ind_complex(this,i,full) result(col)
         class(data_frame),intent(in) :: this
         integer,intent(in) :: i
-        complex(rk),dimension(this%col_size) :: col
+        logical,intent(in),optional :: full ! return full column
+        complex(rk),dimension(:),allocatable :: col
 
-        integer :: ind
+        integer :: ind, end
 
         if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
         ind = this%type_loc(i,2)
 
-        col = this%cdata(:,ind)
+        end = this%col_lens(i)
+        if (present(full)) then
+            if (full) end = this%crows_max
+        end if
+
+        col = this%cdata(:end,ind)
 
     end function df_get_col_ind_complex
 
 
 ! ~~~~ Get Column DF from header
 
-    pure function df_get_col_header_real(this,header) result(col)
+    pure function df_get_col_header_real(this,header,full) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        real(rk),dimension(this%col_size) :: col
+        logical,intent(in),optional :: full ! return full column
+        real(rk),dimension(:),allocatable :: col
 
-        integer :: ind, data_index
+        ! should be refactored so that `data_index` is `ind`, and `ind` is `i` to match index version
+        ! of function
+        integer :: ind, data_index, end
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1359,16 +1392,23 @@ contains
 
         if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
         data_index = this%type_loc(ind,2)
-        col = this%rdata(:,data_index)
+
+        end = this%col_lens(ind)
+        if (present(full)) then
+            if (full) end = this%rrows_max
+        end if
+
+        col = this%rdata(:end,data_index)
 
     end function df_get_col_header_real
 
-    pure function df_get_col_header_integer(this,header) result(col)
+    pure function df_get_col_header_integer(this,header,full) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        integer(ik),dimension(this%col_size) :: col
+        logical,intent(in),optional :: full ! return full column
+        integer(ik),dimension(:),allocatable :: col
 
-        integer :: ind, data_index
+        integer :: ind, data_index, end
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1380,16 +1420,23 @@ contains
 
         if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
         data_index = this%type_loc(ind,2)
-        col = this%idata(:,data_index)
+
+        end = this%col_lens(ind)
+        if (present(full)) then
+            if (full) end = this%irows_max
+        end if
+
+        col = this%idata(:end,data_index)
 
     end function df_get_col_header_integer
 
-    pure function df_get_col_header_logical(this,header) result(col)
+    pure function df_get_col_header_logical(this,header,full) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        logical,dimension(this%col_size) :: col
+        logical,intent(in),optional :: full ! return full column
+        logical,dimension(:),allocatable :: col
 
-        integer :: ind, data_index
+        integer :: ind, data_index, end
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1401,16 +1448,23 @@ contains
 
         if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
         data_index = this%type_loc(ind,2)
-        col = this%ldata(:,data_index)
+
+        end = this%col_lens(ind)
+        if (present(full)) then
+            if (full) end = this%lrows_max
+        end if
+
+        col = this%ldata(:end,data_index)
 
     end function df_get_col_header_logical
 
-    pure function df_get_col_header_character(this,header) result(col)
+    pure function df_get_col_header_character(this,header,full) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
+        logical,intent(in),optional :: full ! return full column
         character(len=:),dimension(:),allocatable :: col
 
-        integer :: ind, data_index
+        integer :: ind, data_index, end
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1422,16 +1476,23 @@ contains
 
         if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
         data_index = this%type_loc(ind,2)
-        col = this%chdata(:,data_index)
+
+        end = this%col_lens(ind)
+        if (present(full)) then
+            if (full) end = this%chrows_max
+        end if
+
+        col = this%chdata(:end,data_index)
 
     end function df_get_col_header_character
 
-    pure function df_get_col_header_complex(this,header) result(col)
+    pure function df_get_col_header_complex(this,header,full) result(col)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        complex(rk),dimension(this%col_size) :: col
+        logical,intent(in),optional :: full ! return full column
+        complex(rk),dimension(:),allocatable :: col
 
-        integer :: ind, data_index
+        integer :: ind, data_index, end
         character(len=:),allocatable :: trunc_header
 
         if (.not. this%with_headers) error stop "data frame has no headers to look up"
@@ -1443,7 +1504,13 @@ contains
 
         if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
         data_index = this%type_loc(ind,2)
-        col = this%cdata(:,data_index)
+
+        end = this%col_lens(ind)
+        if (present(full)) then
+            if (full) end = this%crows_max
+        end if
+
+        col = this%cdata(:end,data_index)
 
     end function df_get_col_header_complex
 
