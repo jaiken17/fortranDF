@@ -20,15 +20,15 @@ module df_fortranDF
     type :: data_frame
         private
         
-        integer :: n, col_size, max_char_len
-        logical :: with_headers
+        integer :: n, max_char_len
+        logical :: with_headers, enforce_length
         character(len=:),dimension(:),allocatable :: headers
 
         integer,dimension(:,:),allocatable :: type_loc
         integer,dimension(:),allocatable :: col_lens
 
         integer :: rcols, icols, lcols, chcols, ccols
-        integer :: rrows_max, irows_max, lrows_max, chrows_max, crows_max
+        integer :: rrows_max, irows_max, lrows_max, chrows_max, crows_max, nrows_max
 
         real(rk),dimension(:,:),allocatable :: rdata
         integer(ik),dimension(:,:),allocatable :: idata
@@ -58,6 +58,7 @@ module df_fortranDF
         procedure :: add_type_loc
         procedure :: add_col_len
 
+        procedure :: add_header
         procedure :: already_header
         procedure :: add_col_real,      &
                      add_col_integer,   &
@@ -70,14 +71,14 @@ module df_fortranDF
                      stretch_cols_logical,      &
                      stretch_cols_character,    &
                      stretch_cols_complex
-        ! procedure :: add_col_var_real,      &
-        !              add_col_var_integer,   &
-        !              add_col_var_logical,   &
-        !              add_col_var_character, &
-        !              add_col_var_complex
+        procedure :: add_col_check_real,      &
+                     add_col_check_integer,   &
+                     add_col_check_logical,   &
+                     add_col_check_character, &
+                     add_col_check_complex
 
-        generic,public :: append => add_col_real, add_col_integer, add_col_logical,    &
-                                    add_col_character, add_col_complex
+        generic,public :: append => add_col_check_real, add_col_check_integer, add_col_check_logical,    &
+                                    add_col_check_character, add_col_check_complex
         ! Public?
         procedure,public :: append_emptyr => add_empty_col_real
         procedure,public :: append_emptyi => add_empty_col_integer
@@ -162,9 +163,10 @@ contains
 
 ! ~~~~ DF Constructor
 
-    subroutine df_constructor(this,char_len)
+    subroutine df_constructor(this,enforce_length,char_len)
         class(data_frame),intent(inout) :: this
         integer,intent(in),optional :: char_len
+        logical,intent(in),optional :: enforce_length
 
         if (this%initialized) call this%destroy()
         this%initialized = .true.
@@ -175,13 +177,24 @@ contains
             this%max_char_len = MAX_CHAR_LEN_DEFAULT
         end if
 
+        if (present(enforce_length)) then
+            this%enforce_length = enforce_length
+        else
+            this%enforce_length = .true.
+        end if
+
         this%n = 0
-        this%rcols = 0
-        this%icols = 0
-        this%lcols = 0
-        this%chcols = 0
-        this%ccols = 0
-        this%col_size = -1  ! indicate no col_size
+        this%rcols = -1
+        this%icols = -1
+        this%lcols = -1
+        this%chcols = -1
+        this%ccols = -1
+        this%rrows_max = -1
+        this%irows_max = -1
+        this%lrows_max = -1
+        this%chrows_max = -1
+        this%crows_max = -1
+        if (this%enforce_length) this%nrows_max = -1
 
     end subroutine
 
@@ -202,12 +215,17 @@ contains
         if (allocated(this%headers)) deallocate(this%headers)
 
         this%n = 0
-        this%col_size = -1
-        this%rcols = 0
-        this%icols = 0
-        this%lcols = 0
-        this%chcols = 0
-        this%ccols = 0
+        this%rcols = -1
+        this%icols = -1
+        this%lcols = -1
+        this%chcols = -1
+        this%ccols = -1
+        this%rrows_max = -1
+        this%irows_max = -1
+        this%lrows_max = -1
+        this%chrows_max = -1
+        this%crows_max = -1
+        this%nrows_max = -1
 
         this%max_char_len = 0
 
@@ -358,22 +376,16 @@ contains
 
 ! ~~~~ Add Column to DF
 
-    subroutine add_col_real(this,col,header)
+    subroutine add_col_real(this,col)
         class(data_frame),intent(inout) :: this
         real(rk),dimension(:),intent(in) :: col
-        character(len=*),intent(in),optional :: header
 
         real(rk),dimension(:,:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n, rcols
 
         if (.not. this%initialized) call this%new()
 
-        if (this%col_size < 0) then
-            this%col_size = size(col,dim=1)
-        else if (this%col_size /= size(col,dim=1)) then
-            error stop 'Different size columns in add col to data_frame'
-        end if
+        if (this%rrows_max < 0) this%rrows_max = size(col,dim=1)
 
         n = this%n
         rcols = this%rcols
@@ -382,60 +394,34 @@ contains
             this%n = n + 1
             this%rcols = rcols + 1
             if (rcols > 0) then
-                allocate(new_cols(this%col_size,rcols+1))
+                allocate(new_cols(this%rrows_max,rcols+1))
                 new_cols(:,1:rcols) = this%rdata
                 new_cols(:,rcols+1) = col
                 this%rdata = new_cols
             else
-                allocate(this%rdata(this%col_size,1))
+                allocate(this%rdata(this%rrows_max,1))
                 this%rdata(:,1) = col
-            end if
-            if (present(header)) then
-                if (this%with_headers) then
-                    if (this%already_header(header)) error stop 'all headers must be unique'
-                    allocate(character(len(this%headers)) :: new_headers(n+1))
-                    new_headers(1:n) = this%headers
-                    new_headers(n+1) = trim(adjustl(header))
-                    this%headers = new_headers
-                else
-                    error stop 'attempt to add headers to data frame that does not have headers'
-                end if
-            else
-                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
             call this%add_type_loc(REAL_NUM,1)
             this%n = 1
             this%rcols = 1
-            allocate(this%rdata(this%col_size,1))
+            allocate(this%rdata(this%rrows_max,1))
             this%rdata(:,1) = col
-            if (present(header)) then
-                allocate(character(this%max_char_len) :: this%headers(1))
-                this%headers(1) = header
-                this%with_headers = .true.
-            else
-                this%with_headers = .false.
-            end if
         end if
 
     end subroutine add_col_real
 
-    subroutine add_col_integer(this,col,header)
+    subroutine add_col_integer(this,col)
         class(data_frame),intent(inout) :: this
         integer(ik),dimension(:),intent(in) :: col
-        character(len=*),intent(in),optional :: header
 
         integer(ik),dimension(:,:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n, icols
 
         if (.not. this%initialized) call this%new()
 
-        if (this%col_size < 0) then
-            this%col_size = size(col,dim=1)
-        else if (this%col_size /= size(col,dim=1)) then
-            error stop 'Different size columns in add col to data_frame'
-        end if
+        if (this%irows_max < 0) this%irows_max = size(col,dim=1)
 
         n = this%n
         icols = this%icols
@@ -444,60 +430,34 @@ contains
             this%n = n + 1
             this%icols = icols + 1
             if (icols > 0) then
-                allocate(new_cols(this%col_size,icols+1))
+                allocate(new_cols(this%irows_max,icols+1))
                 new_cols(:,1:icols) = this%idata
                 new_cols(:,icols+1) = col
                 this%idata = new_cols
             else
-                allocate(this%idata(this%col_size,1))
+                allocate(this%idata(this%irows_max,1))
                 this%idata(:,1) = col
-            end if
-            if (present(header)) then
-                if (this%with_headers) then
-                    if (this%already_header(header)) error stop 'all headers must be unique'
-                    allocate(character(len(this%headers)) :: new_headers(n+1))
-                    new_headers(1:n) = this%headers
-                    new_headers(n+1) = trim(adjustl(header))
-                    this%headers = new_headers
-                else
-                    error stop 'attempt to add headers to data frame that does not have headers'
-                end if
-            else
-                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
             call this%add_type_loc(INTEGER_NUM,1)
             this%n = 1
             this%icols = 1
-            allocate(this%idata(this%col_size,1))
+            allocate(this%idata(this%irows_max,1))
             this%idata(:,1) = col
-            if (present(header)) then
-                allocate(character(this%max_char_len) :: this%headers(1))
-                this%headers(1) = header
-                this%with_headers = .true.
-            else
-                this%with_headers = .false.
-            end if
         end if
 
     end subroutine add_col_integer
 
-    subroutine add_col_logical(this,col,header)
+    subroutine add_col_logical(this,col)
         class(data_frame),intent(inout) :: this
         logical,dimension(:),intent(in) :: col
-        character(len=*),intent(in),optional :: header
 
         logical,dimension(:,:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n, lcols
 
         if (.not. this%initialized) call this%new()
 
-        if (this%col_size < 0) then
-            this%col_size = size(col,dim=1)
-        else if (this%col_size /= size(col,dim=1)) then
-            error stop 'Different size columns in add col to data_frame'
-        end if
+        if (this%lrows_max < 0) this%lrows_max = size(col,dim=1)
 
         n = this%n
         lcols = this%lcols
@@ -506,60 +466,34 @@ contains
             this%n = n + 1
             this%lcols = lcols + 1
             if (lcols > 0) then
-                allocate(new_cols(this%col_size,lcols+1))
+                allocate(new_cols(this%lrows_max,lcols+1))
                 new_cols(:,1:lcols) = this%ldata
                 new_cols(:,lcols+1) = col
                 this%ldata = new_cols
             else
-                allocate(this%ldata(this%col_size,1))
+                allocate(this%ldata(this%lrows_max,1))
                 this%ldata(:,1) = col
-            end if
-            if (present(header)) then
-                if (this%with_headers) then
-                    if (this%already_header(header)) error stop 'all headers must be unique'
-                    allocate(character(len(this%headers)) :: new_headers(n+1))
-                    new_headers(1:n) = this%headers
-                    new_headers(n+1) = trim(adjustl(header))
-                    this%headers = new_headers
-                else
-                    error stop 'attempt to add headers to data frame that does not have headers'
-                end if
-            else
-                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
             call this%add_type_loc(LOGICAL_NUM,1)
             this%n = 1
             this%lcols = 1
-            allocate(this%ldata(this%col_size,1))
+            allocate(this%ldata(this%lrows_max,1))
             this%ldata(:,1) = col
-            if (present(header)) then
-                allocate(character(this%max_char_len) :: this%headers(1))
-                this%headers(1) = header
-                this%with_headers = .true.
-            else
-                this%with_headers = .false.
-            end if
         end if
 
     end subroutine add_col_logical
 
-    subroutine add_col_character(this,col,header)
+    subroutine add_col_character(this,col)
         class(data_frame),intent(inout) :: this
         character(len=*),dimension(:),intent(in) :: col
-        character(len=*),intent(in),optional :: header
 
         character(len=:),dimension(:,:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n,chcols
 
         if (.not. this%initialized) call this%new()
 
-        if (this%col_size < 0) then
-            this%col_size = size(col,dim=1)
-        else if (this%col_size /= size(col,dim=1)) then
-            error stop 'Different size columns in add col to data_frame'
-        end if
+        if (this%chrows_max < 0) this%chrows_max = size(col,dim=1)
 
         n = this%n
         chcols = this%chcols
@@ -568,60 +502,34 @@ contains
             this%n = n + 1
             this%chcols = chcols + 1
             if (chcols > 0) then
-                allocate(character(this%max_char_len) :: new_cols(this%col_size,chcols+1))
+                allocate(character(this%max_char_len) :: new_cols(this%chrows_max,chcols+1))
                 new_cols(:,1:chcols) = this%chdata
                 new_cols(:,chcols+1) = col
                 this%chdata = new_cols
             else
-                allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
+                allocate(character(this%max_char_len) :: this%chdata(this%chrows_max,1))
                 this%chdata(:,1) = col
-            end if
-            if (present(header)) then
-                if (this%with_headers) then
-                    if (this%already_header(header)) error stop 'all headers must be unique'
-                    allocate(character(len(this%headers)) :: new_headers(n+1))
-                    new_headers(1:n) = this%headers
-                    new_headers(n+1) = trim(adjustl(header))
-                    this%headers = new_headers
-                else
-                    error stop 'attempt to add headers to data frame that does not have headers'
-                end if
-            else
-                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
             call this%add_type_loc(CHARACTER_NUM,1)
             this%n = 1
             this%chcols = 1
-            allocate(character(this%max_char_len) :: this%chdata(this%col_size,1))
+            allocate(character(this%max_char_len) :: this%chdata(this%chrows_max,1))
             this%chdata(:,1) = col
-            if (present(header)) then
-                allocate(character(this%max_char_len) :: this%headers(1))
-                this%headers(1) = header
-                this%with_headers = .true.
-            else
-                this%with_headers = .false.
-            end if
         end if
 
     end subroutine add_col_character
 
-    subroutine add_col_complex(this,col,header)
+    subroutine add_col_complex(this,col)
         class(data_frame),intent(inout) :: this
         complex(rk),dimension(:),intent(in) :: col
-        character(len=*),intent(in),optional :: header
 
         complex(rk),dimension(:,:),allocatable :: new_cols
-        character(len=:),dimension(:),allocatable :: new_headers
         integer :: n, ccols
 
         if (.not. this%initialized) call this%new()
 
-        if (this%col_size < 0) then
-            this%col_size = size(col,dim=1)
-        else if (this%col_size /= size(col,dim=1)) then
-            error stop 'Different size columns in add col to data_frame'
-        end if
+        if (this%crows_max < 0) this%crows_max = size(col,dim=1)
 
         n = this%n
         ccols = this%ccols
@@ -630,210 +538,269 @@ contains
             this%n = n + 1
             this%ccols = ccols + 1
             if (ccols > 0) then
-                allocate(new_cols(this%col_size,ccols+1))
+                allocate(new_cols(this%crows_max,ccols+1))
                 new_cols(:,1:ccols) = this%cdata
                 new_cols(:,ccols+1) = col
                 this%cdata = new_cols
             else
-                allocate(this%cdata(this%col_size,1))
+                allocate(this%cdata(this%crows_max,1))
                 this%cdata(:,1) = col
-            end if
-            if (present(header)) then
-                if (this%with_headers) then
-                    if (this%already_header(header)) error stop 'all headers must be unique'
-                    allocate(character(len(this%headers)) :: new_headers(n+1))
-                    new_headers(1:n) = this%headers
-                    new_headers(n+1) = trim(adjustl(header))
-                    this%headers = new_headers
-                else
-                    error stop 'attempt to add headers to data frame that does not have headers'
-                end if
-            else
-                if (this%with_headers) error stop 'if data frame has headers, all columns must have headers'
             end if
         else
             call this%add_type_loc(COMPLEX_NUM,1)
             this%n = 1
             this%ccols = 1
-            allocate(this%cdata(this%col_size,1))
+            allocate(this%cdata(this%crows_max,1))
             this%cdata(:,1) = col
-            if (present(header)) then
-                allocate(character(this%max_char_len) :: this%headers(1))
-                this%headers(1) = header
-                this%with_headers = .true.
-            else
-                this%with_headers = .false.
-            end if
         end if
 
     end subroutine add_col_complex
 
+! ~~~~ Add header
+
+    subroutine add_header(this,header)
+        class(data_frame),intent(inout) :: this
+        character(len=*),intent(in) :: header
+
+        character(len=:),dimension(:),allocatable :: new_headers
+        integer :: num_headers
+
+        if (.not. this%with_headers) error stop 'cannot add header to data_frame not using headers'
+        
+        num_headers = size(this%headers,dim=1)
+
+        if (num_headers < 1) then
+            allocate(character(len=this%max_char_len) :: this%headers(1))
+            this%headers(1) = trim(adjustl(header))
+        else
+            if (this%already_header(header)) error stop 'all headers must be unique'
+            allocate(character(len(this%headers)) :: new_headers(num_headers+1))
+            new_headers(1:num_headers) = this%headers
+            new_headers(num_headers+1) = trim(adjustl(header))
+            this%headers = new_headers
+        end if
+
+    end subroutine add_header
+
+
+
 ! ~~~~ Add col to variable len DF
 
-    subroutine add_col_var_real(this,col,header)
+    subroutine add_col_check_real(this,col,header)
         class(data_frame),intent(inout) :: this
         real(rk),dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
         integer :: col_len
 
+
         col_len = size(col,dim=1)
 
-        if (this%col_size < 0) then
+        if (this%enforce_length .and. (this%nrows_max > 0 .and. this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
+
+        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+
+        if (this%rrows_max < 0) then
+            call this%add_col_real(col)
+            if (.not. this%enforce_length) call this%add_col_len(col_len)
             if (present(header)) then
-                call this%add_col_real(col,header)
-                call this%add_col_len(col_len)
+                call this%add_header(header)
             else
-                call this%add_col_real(col)
-                call this%add_col_len(col_len)
+                if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
             end if
 
             return
         end if
 
-        if (col_len > this%rrows_max) call this%stretch_cols_real(col_len)
+        if ((.not. this%enforce_length) .and. col_len > this%rrows_max) call this%stretch_cols_real(col_len)
+        call this%add_col_real(col)
+        if (.not. this%enforce_length) call this%add_col_len(col_len)
 
         if (present(header)) then
-            call this%add_col_real(col,header)
-            call this%add_col_len(col_len)
+            call this%add_header(header)
         else
-            call this%add_col_real(col)
-            call this%add_col_len(col_len)
+            if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
         end if
 
-    end subroutine add_col_var_real
+    end subroutine add_col_check_real
 
-    subroutine add_col_var_integer(this,col,header)
+    subroutine add_col_check_integer(this,col,header)
         class(data_frame),intent(inout) :: this
         integer(ik),dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
         integer :: col_len
 
+        
         col_len = size(col,dim=1)
 
-        if (this%col_size < 0) then
+        if (this%enforce_length .and. (this%nrows_max > 0 .and. this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
+
+        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+
+        if (this%irows_max < 0) then
+            call this%add_col_integer(col)
+            if (.not. this%enforce_length) call this%add_col_len(col_len)
             if (present(header)) then
-                call this%add_col_integer(col,header)
-                call this%add_col_len(col_len)
+                call this%add_header(header)
             else
-                call this%add_col_integer(col)
-                call this%add_col_len(col_len)
+                if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
             end if
 
             return
         end if
 
-        if (col_len > this%irows_max) call this%stretch_cols_integer(col_len)
+        if ((.not. this%enforce_length) .and. col_len > this%irows_max) call this%stretch_cols_integer(col_len)
+        call this%add_col_integer(col)
+        if (.not. this%enforce_length) call this%add_col_len(col_len)
 
         if (present(header)) then
-            call this%add_col_integer(col,header)
-            call this%add_col_len(col_len)
+            call this%add_header(header)
         else
-            call this%add_col_integer(col)
-            call this%add_col_len(col_len)
+            if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
         end if
 
-    end subroutine add_col_var_integer
+    end subroutine add_col_check_integer
 
-    subroutine add_col_var_logical(this,col,header)
+    subroutine add_col_check_logical(this,col,header)
         class(data_frame),intent(inout) :: this
         logical,dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
         integer :: col_len
 
+        
         col_len = size(col,dim=1)
 
-        if (this%col_size < 0) then
+        if (this%enforce_length .and. (this%nrows_max > 0 .and. this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
+
+        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+
+        if (this%lrows_max < 0) then
+            call this%add_col_logical(col)
+            if (.not. this%enforce_length) call this%add_col_len(col_len)
             if (present(header)) then
-                call this%add_col_logical(col,header)
-                call this%add_col_len(col_len)
+                call this%add_header(header)
             else
-                call this%add_col_logical(col)
-                call this%add_col_len(col_len)
+                if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
             end if
 
             return
         end if
 
-        if (col_len > this%lrows_max) call this%stretch_cols_logical(col_len)
+        if ((.not. this%enforce_length) .and. col_len > this%lrows_max) call this%stretch_cols_logical(col_len)
+        call this%add_col_logical(col)
+        if (.not. this%enforce_length) call this%add_col_len(col_len)
 
         if (present(header)) then
-            call this%add_col_logical(col,header)
-            call this%add_col_len(col_len)
+            call this%add_header(header)
         else
-            call this%add_col_logical(col)
-            call this%add_col_len(col_len)
+            if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
         end if
 
-    end subroutine add_col_var_logical
+    end subroutine add_col_check_logical
 
-    subroutine add_col_var_character(this,col,header)
+    subroutine add_col_check_character(this,col,header)
         class(data_frame),intent(inout) :: this
-        character(len=this%max_char_len),dimension(:),intent(in) :: col
+        character(len=*),dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
         integer :: col_len
 
+        
         col_len = size(col,dim=1)
 
-        if (this%col_size < 0) then
+        if (this%enforce_length .and. (this%nrows_max > 0 .and. this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
+
+        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+
+        if (this%chrows_max < 0) then
+            call this%add_col_character(col)
+            if (.not. this%enforce_length) call this%add_col_len(col_len)
             if (present(header)) then
-                call this%add_col_character(col,header)
-                call this%add_col_len(col_len)
+                call this%add_header(header)
             else
-                call this%add_col_character(col)
-                call this%add_col_len(col_len)
+                if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
             end if
 
             return
         end if
 
-        if (col_len > this%chrows_max) call this%stretch_cols_character(col_len)
+        if ((.not. this%enforce_length) .and. col_len > this%chrows_max) call this%stretch_cols_character(col_len)
+        call this%add_col_character(col)
+        if (.not. this%enforce_length) call this%add_col_len(col_len)
 
         if (present(header)) then
-            call this%add_col_character(col,header)
-            call this%add_col_len(col_len)
+            call this%add_header(header)
         else
-            call this%add_col_character(col)
-            call this%add_col_len(col_len)
+            if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
         end if
 
-    end subroutine add_col_var_character
+    end subroutine add_col_check_character
 
-    subroutine add_col_var_complex(this,col,header)
+    subroutine add_col_check_complex(this,col,header)
         class(data_frame),intent(inout) :: this
         complex(rk),dimension(:),intent(in) :: col
         character(len=*),intent(in),optional :: header
 
         integer :: col_len
 
+        
         col_len = size(col,dim=1)
 
-        if (this%col_size < 0) then
+        if (this%enforce_length .and. (this%nrows_max > 0 .and. this%nrows_max /= size(col,dim=1))) then
+            error stop 'Different size columns in add col to data_frame'
+        end if
+
+        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+
+        if (this%crows_max < 0) then
+            call this%add_col_complex(col)
+            if (.not. this%enforce_length) call this%add_col_len(col_len)
             if (present(header)) then
-                call this%add_col_complex(col,header)
-                call this%add_col_len(col_len)
+                call this%add_header(header)
             else
-                call this%add_col_complex(col)
-                call this%add_col_len(col_len)
+                if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
             end if
 
             return
         end if
 
-        if (col_len > this%crows_max) call this%stretch_cols_complex(col_len)
+        if ((.not. this%enforce_length) .and. col_len > this%crows_max) call this%stretch_cols_complex(col_len)
+        call this%add_col_complex(col)
+        if (.not. this%enforce_length) call this%add_col_len(col_len)
 
         if (present(header)) then
-            call this%add_col_complex(col,header)
-            call this%add_col_len(col_len)
+            call this%add_header(header)
         else
-            call this%add_col_complex(col)
-            call this%add_col_len(col_len)
+            if (this%with_headers) error stop 'if columns have headers, all columns must have headers'
         end if
 
-    end subroutine add_col_var_complex
+    end subroutine add_col_check_complex
+
+! ~~~~ Check num_rows
+
+    function nrows_max_all_same(this) result(all_same)
+        class(data_frame),intent(in) :: this
+        logical :: all_same
+
+        all_same = .true.
+        all_same = all_same .and. this%rrows_max == this%irows_max
+        all_same = all_same .and. this%irows_max == this%lrows_max
+        all_same = all_same .and. this%lrows_max == this%chrows_max
+        all_same = all_same .and. this%chrows_max == this%crows_max
+
+    end function 
+
+
 
 ! ~~~~ Stretch array holding cols
 
