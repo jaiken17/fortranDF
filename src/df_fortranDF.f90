@@ -392,11 +392,13 @@ contains
         real(rk),dimension(:),intent(in) :: col
 
         real(rk),dimension(:,:),allocatable :: new_cols
-        integer :: n, rcols
+        integer :: n, rcols, end
 
         if (.not. this%initialized) call this%new()
 
         if (this%rrows_max < 0) this%rrows_max = size(col,dim=1)
+
+        end = size(col,dim=1)
 
         n = this%n
         rcols = this%rcols
@@ -407,7 +409,7 @@ contains
             if (rcols > 0) then
                 allocate(new_cols(this%rrows_max,rcols+1))
                 new_cols(:,1:rcols) = this%rdata
-                new_cols(:,rcols+1) = col
+                new_cols(:end,rcols+1) = col
                 this%rdata = new_cols
             else
                 allocate(this%rdata(this%rrows_max,1))
@@ -418,7 +420,7 @@ contains
             this%n = 1
             this%rcols = 1
             allocate(this%rdata(this%rrows_max,1))
-            this%rdata(:,1) = col
+            this%rdata(:end,1) = col
         end if
 
     end subroutine add_col_real
@@ -428,11 +430,13 @@ contains
         integer(ik),dimension(:),intent(in) :: col
 
         integer(ik),dimension(:,:),allocatable :: new_cols
-        integer :: n, icols
+        integer :: n, icols, end
 
         if (.not. this%initialized) call this%new()
 
         if (this%irows_max < 0) this%irows_max = size(col,dim=1)
+
+        end = size(col,dim=1)
 
         n = this%n
         icols = this%icols
@@ -443,11 +447,11 @@ contains
             if (icols > 0) then
                 allocate(new_cols(this%irows_max,icols+1))
                 new_cols(:,1:icols) = this%idata
-                new_cols(:,icols+1) = col
+                new_cols(:end,icols+1) = col
                 this%idata = new_cols
             else
                 allocate(this%idata(this%irows_max,1))
-                this%idata(:,1) = col
+                this%idata(:end,1) = col
             end if
         else
             call this%add_type_loc(INTEGER_NUM,1)
@@ -464,11 +468,13 @@ contains
         logical,dimension(:),intent(in) :: col
 
         logical,dimension(:,:),allocatable :: new_cols
-        integer :: n, lcols
+        integer :: n, lcols, end
 
         if (.not. this%initialized) call this%new()
 
         if (this%lrows_max < 0) this%lrows_max = size(col,dim=1)
+
+        end = size(col,dim=1)
 
         n = this%n
         lcols = this%lcols
@@ -479,11 +485,11 @@ contains
             if (lcols > 0) then
                 allocate(new_cols(this%lrows_max,lcols+1))
                 new_cols(:,1:lcols) = this%ldata
-                new_cols(:,lcols+1) = col
+                new_cols(:end,lcols+1) = col
                 this%ldata = new_cols
             else
                 allocate(this%ldata(this%lrows_max,1))
-                this%ldata(:,1) = col
+                this%ldata(:end,1) = col
             end if
         else
             call this%add_type_loc(LOGICAL_NUM,1)
@@ -500,11 +506,13 @@ contains
         character(len=*),dimension(:),intent(in) :: col
 
         character(len=:),dimension(:,:),allocatable :: new_cols
-        integer :: n,chcols
+        integer :: n,chcols, end
 
         if (.not. this%initialized) call this%new()
 
         if (this%chrows_max < 0) this%chrows_max = size(col,dim=1)
+
+        end = size(col,dim=1)
 
         n = this%n
         chcols = this%chcols
@@ -515,11 +523,11 @@ contains
             if (chcols > 0) then
                 allocate(character(this%max_char_len) :: new_cols(this%chrows_max,chcols+1))
                 new_cols(:,1:chcols) = this%chdata
-                new_cols(:,chcols+1) = col
+                new_cols(:end,chcols+1) = col
                 this%chdata = new_cols
             else
                 allocate(character(this%max_char_len) :: this%chdata(this%chrows_max,1))
-                this%chdata(:,1) = col
+                this%chdata(:end,1) = col
             end if
         else
             call this%add_type_loc(CHARACTER_NUM,1)
@@ -536,11 +544,13 @@ contains
         complex(rk),dimension(:),intent(in) :: col
 
         complex(rk),dimension(:,:),allocatable :: new_cols
-        integer :: n, ccols
+        integer :: n, ccols, end
 
         if (.not. this%initialized) call this%new()
 
         if (this%crows_max < 0) this%crows_max = size(col,dim=1)
+
+        end = size(col,dim=1)
 
         n = this%n
         ccols = this%ccols
@@ -551,11 +561,11 @@ contains
             if (ccols > 0) then
                 allocate(new_cols(this%crows_max,ccols+1))
                 new_cols(:,1:ccols) = this%cdata
-                new_cols(:,ccols+1) = col
+                new_cols(:end,ccols+1) = col
                 this%cdata = new_cols
             else
                 allocate(this%cdata(this%crows_max,1))
-                this%cdata(:,1) = col
+                this%cdata(:end,1) = col
             end if
         else
             call this%add_type_loc(COMPLEX_NUM,1)
@@ -613,6 +623,8 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
 
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+
         if (this%rrows_max < 0) then
             call this%add_col_real(col)
             if (.not. this%enforce_length) call this%add_col_len(col_len)
@@ -652,6 +664,8 @@ contains
         end if
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
 
         if (this%irows_max < 0) then
             call this%add_col_integer(col)
@@ -693,6 +707,8 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
 
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+
         if (this%lrows_max < 0) then
             call this%add_col_logical(col)
             if (.not. this%enforce_length) call this%add_col_len(col_len)
@@ -733,6 +749,8 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
 
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+
         if (this%chrows_max < 0) then
             call this%add_col_character(col)
             if (.not. this%enforce_length) call this%add_col_len(col_len)
@@ -772,6 +790,8 @@ contains
         end if
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
 
         if (this%crows_max < 0) then
             call this%add_col_complex(col)
@@ -1072,6 +1092,8 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
 
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+
         if (this%rrows_max < 0) then
             call this%add_empty_col_real(col_size)
             if (.not. this%enforce_length) call this%add_col_len(col_size)
@@ -1108,6 +1130,8 @@ contains
         end if
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
+
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
 
         if (this%irows_max < 0) then
             call this%add_empty_col_integer(col_size)
@@ -1146,6 +1170,8 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
 
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+
         if (this%lrows_max < 0) then
             call this%add_empty_col_logical(col_size)
             if (.not. this%enforce_length) call this%add_col_len(col_size)
@@ -1183,6 +1209,8 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
 
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+
         if (this%chrows_max < 0) then
             call this%add_empty_col_character(col_size)
             if (.not. this%enforce_length) call this%add_col_len(col_size)
@@ -1219,6 +1247,8 @@ contains
         end if
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
+
+        if (this%n < 1 .and. present(header)) this%with_headers = .true.
 
         if (this%crows_max < 0) then
             call this%add_empty_col_complex(col_size)
@@ -2172,19 +2202,19 @@ contains
         integer :: i, j
         integer :: num_cols, len_cols
 
-        real(rk) :: rval
-        integer(ik) :: ival
-        logical :: lval
-        character(len=this%max_char_len) :: chval
-        complex(rk) :: cval
+        real(rk) :: rval, rfill
+        integer(ik) :: ival, ifill
+        logical :: lval, lfill
+        character(len=this%max_char_len) :: chval, chfill
+        complex(rk) :: cval, cfill
 
-
-        real(rk),parameter :: rfill = 0.0_rk
-        integer(ik),parameter :: ifill = 0
-        logical,parameter :: lfill = .false.
-        character(len=this%max_char_len),parameter :: chfill = "null"
-        complex(rk),parameter :: cfill = 0.0_rk
         logical :: outside_col
+
+        rfill = 0.0_rk
+        ifill = 0
+        lfill = .false.
+        chfill = trim(adjustl("null"))
+        cfill = 0.0_rk
 
 
         if (present(unit)) then
