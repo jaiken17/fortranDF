@@ -597,12 +597,12 @@ contains
 
         if (.not. this%with_headers) error stop 'cannot add header to data_frame not using headers'
         
-        num_headers = size(this%headers,dim=1)
 
-        if (num_headers < 1) then
+        if (.not. allocated(this%headers)) then
             allocate(character(len=this%max_char_len) :: this%headers(1))
             this%headers(1) = trim(adjustl(header))
         else
+            num_headers = size(this%headers,dim=1)
             if (this%already_header(header)) error stop 'all headers must be unique'
             allocate(character(len(this%headers)) :: new_headers(num_headers+1))
             new_headers(1:num_headers) = this%headers
@@ -1306,6 +1306,11 @@ contains
 
         character(len=this%max_char_len) :: trunc_header
 
+        if (.not. allocated(this%headers)) then
+            already_header = .false.
+            return
+        end if
+
         trunc_header = trim(adjustl(header))
         if (findloc(this%headers,trunc_header,dim=1) > 0) then
             already_header = .true.
@@ -1329,7 +1334,12 @@ contains
         if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
         ind = this%type_loc(i,2)
 
-        end = this%col_lens(i)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(i)
+        else
+            end = this%nrows_max
+        end if
+        
         if (present(full)) then
             if (full) end = this%rrows_max
         end if
@@ -1349,7 +1359,12 @@ contains
         if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
         ind = this%type_loc(i,2)
 
-        end = this%col_lens(i)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(i)
+        else
+            end = this%nrows_max
+        end if
+
         if (present(full)) then
             if (full) end = this%irows_max
         end if
@@ -1369,7 +1384,12 @@ contains
         if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
         ind = this%type_loc(i,2)
 
-        end = this%col_lens(i)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(i)
+        else
+            end = this%nrows_max
+        end if
+
         if (present(full)) then
             if (full) end = this%lrows_max
         end if
@@ -1389,7 +1409,12 @@ contains
         if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
         ind = this%type_loc(i,2)
 
-        end = this%col_lens(i)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(i)
+        else
+            end = this%nrows_max
+        end if
+
         if (present(full)) then
             if (full) end = this%chrows_max
         end if
@@ -1409,7 +1434,12 @@ contains
         if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
         ind = this%type_loc(i,2)
 
-        end = this%col_lens(i)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(i)
+        else
+            end = this%nrows_max
+        end if
+
         if (present(full)) then
             if (full) end = this%crows_max
         end if
@@ -1442,7 +1472,12 @@ contains
         if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
         data_index = this%type_loc(ind,2)
 
-        end = this%col_lens(ind)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(ind)
+        else
+            end = this%nrows_max
+        end if
+
         if (present(full)) then
             if (full) end = this%rrows_max
         end if
@@ -1470,7 +1505,12 @@ contains
         if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
         data_index = this%type_loc(ind,2)
 
-        end = this%col_lens(ind)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(ind)
+        else
+            end = this%nrows_max
+        end if
+        
         if (present(full)) then
             if (full) end = this%irows_max
         end if
@@ -1498,7 +1538,12 @@ contains
         if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
         data_index = this%type_loc(ind,2)
 
-        end = this%col_lens(ind)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(ind)
+        else
+            end = this%nrows_max
+        end if
+        
         if (present(full)) then
             if (full) end = this%lrows_max
         end if
@@ -1526,7 +1571,12 @@ contains
         if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
         data_index = this%type_loc(ind,2)
 
-        end = this%col_lens(ind)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(ind)
+        else
+            end = this%nrows_max
+        end if
+        
         if (present(full)) then
             if (full) end = this%chrows_max
         end if
@@ -1554,7 +1604,12 @@ contains
         if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
         data_index = this%type_loc(ind,2)
 
-        end = this%col_lens(ind)
+        if (.not. this%enforce_length) then
+            end = this%col_lens(ind)
+        else
+            end = this%nrows_max
+        end if
+        
         if (present(full)) then
             if (full) end = this%crows_max
         end if
