@@ -403,18 +403,20 @@ contains
         n = this%n
         rcols = this%rcols
         if (n > 0) then
-            call this%add_type_loc(REAL_NUM,rcols+1)
-            this%n = n + 1
-            this%rcols = rcols + 1
             if (rcols > 0) then
                 allocate(new_cols(this%rrows_max,rcols+1))
                 new_cols(:,1:rcols) = this%rdata
                 new_cols(:end,rcols+1) = col
                 this%rdata = new_cols
+                this%rcols = rcols + 1
+                call this%add_type_loc(REAL_NUM,rcols+1)
             else
                 allocate(this%rdata(this%rrows_max,1))
                 this%rdata(:,1) = col
+                this%rcols = 1
+                call this%add_type_loc(REAL_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(REAL_NUM,1)
             this%n = 1
@@ -441,18 +443,20 @@ contains
         n = this%n
         icols = this%icols
         if (n > 0) then
-            call this%add_type_loc(INTEGER_NUM,icols+1)
-            this%n = n + 1
-            this%icols = icols + 1
             if (icols > 0) then
                 allocate(new_cols(this%irows_max,icols+1))
                 new_cols(:,1:icols) = this%idata
                 new_cols(:end,icols+1) = col
                 this%idata = new_cols
+                this%icols = icols + 1
+                call this%add_type_loc(INTEGER_NUM,icols+1)
             else
                 allocate(this%idata(this%irows_max,1))
                 this%idata(:end,1) = col
+                this%icols = 1
+                call this%add_type_loc(INTEGER_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(INTEGER_NUM,1)
             this%n = 1
@@ -479,18 +483,20 @@ contains
         n = this%n
         lcols = this%lcols
         if (n > 0) then
-            call this%add_type_loc(LOGICAL_NUM,lcols+1)
-            this%n = n + 1
-            this%lcols = lcols + 1
             if (lcols > 0) then
                 allocate(new_cols(this%lrows_max,lcols+1))
                 new_cols(:,1:lcols) = this%ldata
                 new_cols(:end,lcols+1) = col
                 this%ldata = new_cols
+                this%lcols = lcols + 1
+                call this%add_type_loc(LOGICAL_NUM,lcols+1)
             else
                 allocate(this%ldata(this%lrows_max,1))
                 this%ldata(:end,1) = col
+                this%lcols = 1
+                call this%add_type_loc(LOGICAL_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(LOGICAL_NUM,1)
             this%n = 1
@@ -517,18 +523,20 @@ contains
         n = this%n
         chcols = this%chcols
         if (n > 0) then
-            call this%add_type_loc(CHARACTER_NUM,chcols+1)
-            this%n = n + 1
-            this%chcols = chcols + 1
             if (chcols > 0) then
                 allocate(character(this%max_char_len) :: new_cols(this%chrows_max,chcols+1))
                 new_cols(:,1:chcols) = this%chdata
                 new_cols(:end,chcols+1) = col
                 this%chdata = new_cols
+                this%chcols = chcols + 1
+                call this%add_type_loc(CHARACTER_NUM,chcols+1)
             else
                 allocate(character(this%max_char_len) :: this%chdata(this%chrows_max,1))
                 this%chdata(:end,1) = col
+                this%chcols = 1
+                call this%add_type_loc(CHARACTER_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(CHARACTER_NUM,1)
             this%n = 1
@@ -555,18 +563,19 @@ contains
         n = this%n
         ccols = this%ccols
         if (n > 0) then
-            call this%add_type_loc(COMPLEX_NUM,ccols+1)
-            this%n = n + 1
-            this%ccols = ccols + 1
             if (ccols > 0) then
                 allocate(new_cols(this%crows_max,ccols+1))
                 new_cols(:,1:ccols) = this%cdata
                 new_cols(:end,ccols+1) = col
                 this%cdata = new_cols
+                this%ccols = ccols + 1
             else
                 allocate(this%cdata(this%crows_max,1))
                 this%cdata(:end,1) = col
+                this%ccols = 1
+                call this%add_type_loc(COMPLEX_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(COMPLEX_NUM,1)
             this%n = 1
@@ -924,16 +933,18 @@ contains
         n = this%n
         rcols = this%rcols
         if (n > 0) then
-            call this%add_type_loc(REAL_NUM,rcols+1)
-            this%n = n + 1
-            this%rcols = rcols + 1
             if (rcols > 0) then
                 allocate(new_cols(this%rrows_max,rcols+1))
                 new_cols(:,1:rcols) = this%rdata
                 this%rdata = new_cols
+                this%rcols = rcols + 1
+                call this%add_type_loc(REAL_NUM,rcols+1)
             else
                 allocate(this%rdata(this%rrows_max,1))
+                this%rcols = 1
+                call this%add_type_loc(REAL_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(REAL_NUM,1)
             this%n = 1
@@ -958,16 +969,18 @@ contains
         n = this%n
         icols = this%icols
         if (n > 0) then
-            call this%add_type_loc(INTEGER_NUM,icols+1)
-            this%n = n + 1
-            this%icols = icols + 1
             if (icols > 0) then
                 allocate(new_cols(this%irows_max,icols+1))
                 new_cols(:,1:icols) = this%idata
                 this%idata = new_cols
+                this%icols = icols + 1
+                call this%add_type_loc(INTEGER_NUM,icols+1)
             else
                 allocate(this%idata(this%irows_max,1))
+                this%icols = 1
+                call this%add_type_loc(INTEGER_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(INTEGER_NUM,1)
             this%n = 1
@@ -992,16 +1005,18 @@ contains
         n = this%n
         lcols = this%lcols
         if (n > 0) then
-            call this%add_type_loc(LOGICAL_NUM,lcols+1)
-            this%n = n + 1
-            this%lcols = lcols + 1
             if (lcols > 0) then
                 allocate(new_cols(this%lrows_max,lcols+1))
                 new_cols(:,1:lcols) = this%ldata
                 this%ldata = new_cols
+                this%lcols = lcols + 1
+                call this%add_type_loc(LOGICAL_NUM,lcols+1)
             else
                 allocate(this%ldata(this%lrows_max,1))
+                this%lcols = 1
+                call this%add_type_loc(LOGICAL_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(LOGICAL_NUM,1)
             this%n = 1
@@ -1026,16 +1041,18 @@ contains
         n = this%n
         chcols = this%chcols
         if (n > 0) then
-            call this%add_type_loc(CHARACTER_NUM,chcols+1)
-            this%n = n + 1
-            this%chcols = chcols + 1
             if (chcols > 0) then
                 allocate(character(this%max_char_len) :: new_cols(this%chrows_max,chcols+1))
                 new_cols(:,1:chcols) = this%chdata
                 this%chdata = new_cols
+                this%chcols = chcols + 1
+                call this%add_type_loc(CHARACTER_NUM,chcols+1)
             else
                 allocate(character(this%max_char_len) :: this%chdata(this%chrows_max,1))
+                this%chcols = 1
+                call this%add_type_loc(CHARACTER_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(CHARACTER_NUM,1)
             this%n = 1
@@ -1060,16 +1077,18 @@ contains
         n = this%n
         ccols = this%ccols
         if (n > 0) then
-            call this%add_type_loc(COMPLEX_NUM,ccols+1)
-            this%n = n + 1
-            this%ccols = ccols + 1
             if (ccols > 0) then
                 allocate(new_cols(this%crows_max,ccols+1))
                 new_cols(:,1:ccols) = this%cdata
                 this%cdata = new_cols
+                this%ccols = ccols + 1
+                call this%add_type_loc(COMPLEX_NUM,ccols+1)
             else
                 allocate(this%cdata(this%crows_max,1))
+                this%ccols = 1
+                call this%add_type_loc(COMPLEX_NUM,1)
             end if
+            this%n = n + 1
         else
             call this%add_type_loc(COMPLEX_NUM,1)
             this%n = 1
