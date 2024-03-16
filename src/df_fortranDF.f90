@@ -632,7 +632,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%rrows_max < 0) then
             call this%add_col_real(col)
@@ -674,7 +677,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%irows_max < 0) then
             call this%add_col_integer(col)
@@ -716,7 +722,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%lrows_max < 0) then
             call this%add_col_logical(col)
@@ -758,7 +767,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%chrows_max < 0) then
             call this%add_col_character(col)
@@ -800,7 +812,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%crows_max < 0) then
             call this%add_col_complex(col)
@@ -1111,7 +1126,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%rrows_max < 0) then
             call this%add_empty_col_real(col_size)
@@ -1150,7 +1168,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%irows_max < 0) then
             call this%add_empty_col_integer(col_size)
@@ -1189,7 +1210,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%lrows_max < 0) then
             call this%add_empty_col_logical(col_size)
@@ -1228,7 +1252,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%chrows_max < 0) then
             call this%add_empty_col_character(col_size)
@@ -1267,7 +1294,10 @@ contains
 
         if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
 
-        if (this%n < 1 .and. present(header)) this%with_headers = .true.
+        if (this%n < 1) then
+            this%with_headers = .false.
+            if (present(header)) this%with_headers = .true.
+        end if
 
         if (this%crows_max < 0) then
             call this%add_empty_col_complex(col_size)
