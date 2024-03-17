@@ -26,6 +26,22 @@ program main
 
     print*, " " ! newline
 
+    ! Variable length cols
+    call df%new(enforce_length=.false.)
+    call df%append([1,2,3,4,5,6,7,8,9,10])
+    call df%append([1.0_rk, 2.0_rk, 3.0_rk])
+    call df%append(["test1","test2","test3","test4"])
+    call df%write()
+
+    print*, "num elems in real col: ", df%nrows(2)
+    print*, "num elems in char col: ", df%nrows(3)
+    print*, "most num elems in a col: ", df%nrows()
+
+    call df%destroy()
+
+    print*, " " ! newline
+
+
 
     ! Make truth table for AND gate
     call df%new()
@@ -48,5 +64,7 @@ program main
     print*, "logical:   ", LOGICAL_NUM
     print*, "character: ", CHARACTER_NUM
     print*, "complex:   ", COMPLEX_NUM
+
+    call df%destroy()
 
 end program main
