@@ -45,7 +45,8 @@ module df_fortranDF
         procedure,public :: destroy => df_destructor
 
         procedure,public :: ncols => df_get_num_cols
-        procedure,public :: nrows => df_get_num_rows
+        procedure :: df_get_num_rows, df_get_nrows_max
+        generic,public :: nrows => df_get_num_rows, df_get_nrows_max
         procedure,public :: nreal_cols => df_get_num_cols_real
         procedure,public :: ninteger_cols => df_get_num_cols_integer
         procedure,public :: nlogical_cols => df_get_num_cols_logical
@@ -306,6 +307,14 @@ contains
         num_rows = this%col_lens(ind)
 
     end function df_get_num_rows
+
+    pure function df_get_nrows_max(this) result(nrows_max)
+        class(data_frame),intent(in) :: this
+        integer :: nrows_max
+
+        nrows_max = this%nrows_max
+
+    end function df_get_nrows_max
 
     pure function df_get_col_type_header(this,header) result(dtype)
         class(data_frame),intent(in) :: this
@@ -630,7 +639,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+        if (this%nrows_max < 0 .or.     &
+            (.not. this%enforce_length .and. col_len > this%nrows_max)) then
+                this%nrows_max = col_len
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -675,7 +687,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_len > this%nrows_max)) then
+                this%nrows_max = col_len
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -720,7 +735,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_len > this%nrows_max)) then
+                this%nrows_max = col_len
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -765,7 +783,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_len > this%nrows_max)) then
+                this%nrows_max = col_len
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -810,7 +831,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_len
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_len > this%nrows_max)) then
+                this%nrows_max = col_len
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -1124,7 +1148,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_size > this%nrows_max)) then
+                this%nrows_max = col_size
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -1166,7 +1193,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_size > this%nrows_max)) then
+                this%nrows_max = col_size
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -1208,7 +1238,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_size > this%nrows_max)) then
+                this%nrows_max = col_size
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -1250,7 +1283,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_size > this%nrows_max)) then
+                this%nrows_max = col_size
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -1292,7 +1328,10 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%enforce_length .and. this%nrows_max < 0) this%nrows_max = col_size
+        if (this%nrows_max < 0 .or.      &
+            (.not. this%enforce_length .and. col_size > this%nrows_max)) then
+                this%nrows_max = col_size
+        end if
 
         if (this%n < 1) then
             this%with_headers = .false.
@@ -2359,23 +2398,35 @@ contains
                 select case (this%type_loc(j,1))
                     case (REAL_NUM)
                         pfmt = "(a2,"//trim(adjustl(rfmt))//",a1)"
-                        rval = this%getr(j,i)
-                        if (i > this%rrows_max) rval = rfill
+                        if (i > this%rrows_max) then
+                            rval = rfill
+                        else
+                            rval = this%getr(j,i)
+                        end if
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", rval, " "
                     case (INTEGER_NUM)
                         pfmt = "(a2,"//trim(adjustl(ifmt))//",a1)"
-                        ival = this%geti(j,i)
-                        if (i > this%irows_max) ival = ifill
+                        if (i > this%irows_max) then
+                            ival = ifill
+                        else
+                            ival = this%geti(j,i)
+                        end if
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", ival, " "
                     case (LOGICAL_NUM)
                         pfmt = "(a2,"//trim(adjustl(lfmt))//",a1)"
-                        lval = this%getl(j,i)
-                        if (i > this%lrows_max) lval = lfill
+                        if (i > this%lrows_max) then
+                            lval = lfill
+                        else
+                            lval = this%getl(j,i)
+                        end if
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", lval, " "
                     case (CHARACTER_NUM)
                         pfmt = "(a2,"//trim(adjustl(chfmt))//",a1)"
-                        chval = this%getch(j,i)
-                        if (i > this%chrows_max) chval = chfill
+                        if (i > this%chrows_max) then
+                            chval = chfill
+                        else
+                            chval = this%getch(j,i)
+                        end if
                         output_char = trim(adjustl(chval))
                         write(io_unit,pfmt,iostat=io_err,advance='no') "| ", adjustr(output_char), " "
                     case (COMPLEX_NUM)
