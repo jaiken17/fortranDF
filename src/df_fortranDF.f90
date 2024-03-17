@@ -2492,6 +2492,10 @@ contains
 
         integer :: i, offset
 
+        if (.not. this%enforce_length) then
+            error stop 'currently only fixed-length data frames are supported for reading from file'
+        end if
+
         open(newunit=unit,file=trim(adjustl(filename)),status="old",action="read",iostat=io_err)
         if (io_err /= 0) then
             err_msg = err_msg_io_open//" "//trim(adjustl(filename))
