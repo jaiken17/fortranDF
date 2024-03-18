@@ -1,13 +1,29 @@
 # Recipe file for FPM
+
+# Release using default compiler
+@run_rel
+option run --profile release
+@test_rel
+option test --profile release
+@build_rel
+option build --profile release
+
+
 # This is needed to compile when default gfortran is gfortran-10+
-@run 
+# gfortran-9 must be installed and invokable through 'gfortran-9'
+@run_gf9
 option run --compiler gfortran-9
-@test 
+@test_gf9 
 option test --compiler gfortran-9
-@build
+@build_gf9
 option build --compiler gfortran-9
 
-@run_release
+# Release using gfortran-9
+@run_rel_gf9
 option run --compiler gfortran-9 --profile release
-@build_release
+@test_rel_gf9 
+option test --compiler gfortran-9 --profile release
+@build_rel_gf9
 option build --compiler gfortran-9 --profile release
+
+
