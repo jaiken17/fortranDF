@@ -53,6 +53,8 @@ module df_fortranDF
         procedure,public :: ncharacter_cols => df_get_num_cols_character
         procedure,public :: ncomplex_cols => df_get_num_cols_complex
 
+        procedure,public :: header => get_header
+
         procedure :: df_get_col_type_header, df_get_col_type_index
         generic,public :: dtype => df_get_col_type_header, df_get_col_type_index
 
@@ -343,6 +345,17 @@ contains
         dtype = this%type_loc(j,1)
 
     end function df_get_col_type_index
+
+! ~~~~ get header
+
+    function get_header(this,j) result(header)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: j
+        character(len=this%max_char_len) :: header
+
+        header = this%headers(j)
+
+    end function get_header
 
 
 ! ~~~~ add type_loc
