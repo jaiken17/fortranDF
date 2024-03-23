@@ -21,6 +21,7 @@ program main
     print*, "get column 1: ", df%geti(1)
     print*, "num real cols:    ", df%nreal_cols()
     print*, "num integer cols: ", df%nreal_cols()
+    print*, "header of column 2: ", df%header(2)
 
     call df%destroy()
 
