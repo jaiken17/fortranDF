@@ -34,9 +34,10 @@ program main
     call df%append(["test1","test2","test3","test4"])
     call df%write()
 
-    print*, "num elems in real col: ", df%nrows(2)
-    print*, "num elems in char col: ", df%nrows(3)
+    print*, "num elems in real col:   ", df%nrows(2)
+    print*, "num elems in char col:   ", df%nrows(3)
     print*, "most num elems in a col: ", df%nrows()
+    print*, "max num rows:            ", df%nrows()
 
     call df%destroy()
 
