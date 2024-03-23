@@ -208,7 +208,7 @@ contains
         this%lrows_max = -1
         this%chrows_max = -1
         this%crows_max = -1
-        if (this%enforce_length) this%nrows_max = -1
+        this%nrows_max = -1
 
     end subroutine
 
