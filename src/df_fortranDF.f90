@@ -53,6 +53,7 @@ module df_fortranDF
         procedure,public :: ncharacter_cols => df_get_num_cols_character
         procedure,public :: ncomplex_cols => df_get_num_cols_complex
 
+        procedure,public :: get_max_char_len => df_get_max_char_len
         procedure,public :: header => get_header
 
         procedure :: df_get_col_type_header, df_get_col_type_index
@@ -345,6 +346,14 @@ contains
         dtype = this%type_loc(j,1)
 
     end function df_get_col_type_index
+
+    pure function df_get_max_char_len(this) result(max_char_len)
+        class(data_frame),intent(in) :: this
+        integer :: max_char_len
+
+        max_char_len = this%max_char_len
+
+    end function df_get_max_char_len
 
 ! ~~~~ get header
 
