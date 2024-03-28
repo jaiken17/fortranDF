@@ -38,6 +38,7 @@ program main
     print*, "num elems in char col:   ", df%nrows(3)
     print*, "most num elems in a col: ", df%nrows()
     print*, "max num rows:            ", df%nrows()
+    print*, "max char len:            ", df%get_max_char_len()
 
     call df%destroy()
 
@@ -46,12 +47,14 @@ program main
 
 
     ! Make truth table for AND gate
-    call df%new()
+    call df%new(char_len=10)
     call df%append([.true.,.true.,.false.,.false.],"a")
     call df%append([.true.,.false.,.true.,.false.],"b")
     call df%append(df%getl("a") .and. df%getl("b"),"a .and. b")
 
     call df%write()
+    print*, "max char len: ", df%get_max_char_len()
+    print*, " "
 
     call df%destroy()
    
