@@ -226,6 +226,7 @@ contains
         if (allocated(this%cdata)) deallocate(this%cdata)
 
         if (allocated(this%type_loc)) deallocate(this%type_loc)
+        if (allocated(this%col_lens)) deallocate(this%col_lens)
 
         if (allocated(this%headers)) deallocate(this%headers)
 
