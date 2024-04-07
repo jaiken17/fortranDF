@@ -43,6 +43,7 @@ module df_fortranDF
 
         procedure,public :: new => df_constructor
         procedure,public :: destroy => df_destructor
+        procedure,public :: is_initialized => df_is_initialized
 
         procedure,public :: ncols => df_get_num_cols
         procedure :: df_get_num_rows, df_get_nrows_max
@@ -355,6 +356,14 @@ contains
         max_char_len = this%max_char_len
 
     end function df_get_max_char_len
+
+    pure function df_is_initialized(this) result(is_initialized)
+        class(data_frame),intent(in) :: this
+        logical :: is_initialized
+
+        is_initialized = this%initialized
+
+    end function df_is_initialized
 
 ! ~~~~ get header
 
