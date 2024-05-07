@@ -367,12 +367,12 @@ contains
 
 ! ~~~~ get header
 
-    function get_header(this,j) result(header)
+    function get_header(this,col_index) result(header)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: j
+        integer,intent(in) :: col_index
         character(len=this%max_char_len) :: header
 
-        header = this%headers(j)
+        header = this%headers(col_index)
 
     end function get_header
 
@@ -1424,19 +1424,19 @@ contains
 
 ! ~~~~ Get Column DF with index
 
-    pure function df_get_col_ind_real(this,i,full) result(col)
+    pure function df_get_col_ind_real(this,col_index,full) result(col)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         logical,intent(in),optional :: full ! return full column
         real(rk),dimension(:),allocatable :: col
 
         integer :: ind, end
 
-        if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= REAL_NUM) error stop 'column is not of real type'
+        ind = this%type_loc(col_index,2)
 
         if (.not. this%enforce_length) then
-            end = this%col_lens(i)
+            end = this%col_lens(col_index)
         else
             end = this%nrows_max
         end if
@@ -1449,19 +1449,19 @@ contains
 
     end function df_get_col_ind_real
 
-    pure function df_get_col_ind_integer(this,i,full) result(col)
+    pure function df_get_col_ind_integer(this,col_index,full) result(col)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         logical,intent(in),optional :: full ! return full column
         integer(ik),dimension(:),allocatable :: col
 
         integer :: ind, end
 
-        if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        ind = this%type_loc(col_index,2)
 
         if (.not. this%enforce_length) then
-            end = this%col_lens(i)
+            end = this%col_lens(col_index)
         else
             end = this%nrows_max
         end if
@@ -1474,19 +1474,19 @@ contains
 
     end function df_get_col_ind_integer
 
-    pure function df_get_col_ind_logical(this,i,full) result(col)
+    pure function df_get_col_ind_logical(this,col_index,full) result(col)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         logical,intent(in),optional :: full ! return full column
         logical,dimension(:),allocatable :: col
 
         integer :: ind, end
 
-        if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        ind = this%type_loc(col_index,2)
 
         if (.not. this%enforce_length) then
-            end = this%col_lens(i)
+            end = this%col_lens(col_index)
         else
             end = this%nrows_max
         end if
@@ -1499,19 +1499,19 @@ contains
 
     end function df_get_col_ind_logical
 
-    pure function df_get_col_ind_character(this,i,full) result(col)
+    pure function df_get_col_ind_character(this,col_index,full) result(col)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         logical,intent(in),optional :: full ! return full column
         character(len=:),dimension(:),allocatable :: col
 
         integer :: ind, end
 
-        if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        ind = this%type_loc(col_index,2)
 
         if (.not. this%enforce_length) then
-            end = this%col_lens(i)
+            end = this%col_lens(col_index)
         else
             end = this%nrows_max
         end if
@@ -1524,19 +1524,19 @@ contains
 
     end function df_get_col_ind_character
 
-    pure function df_get_col_ind_complex(this,i,full) result(col)
+    pure function df_get_col_ind_complex(this,col_index,full) result(col)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         logical,intent(in),optional :: full ! return full column
         complex(rk),dimension(:),allocatable :: col
 
         integer :: ind, end
 
-        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        ind = this%type_loc(col_index,2)
 
         if (.not. this%enforce_length) then
-            end = this%col_lens(i)
+            end = this%col_lens(col_index)
         else
             end = this%nrows_max
         end if
@@ -1722,83 +1722,83 @@ contains
 
 ! ~~~~ Get Single Val DF
 
-    pure function df_get_val_real(this,i,j) result(val)
+    pure function df_get_val_real(this,col_index,row_index) result(val)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         real(rk) :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= REAL_NUM) error stop 'column is not of real type'
+        ind = this%type_loc(col_index,2)
 
-        val = this%rdata(j,ind)
+        val = this%rdata(row_index,ind)
 
     end function df_get_val_real
 
-    pure function df_get_val_integer(this,i,j) result(val)
+    pure function df_get_val_integer(this,col_index,row_index) result(val)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         integer(ik) :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        ind = this%type_loc(col_index,2)
 
-        val = this%idata(j,ind)
+        val = this%idata(row_index,ind)
 
     end function df_get_val_integer
     
-    pure function df_get_val_logical(this,i,j) result(val)
+    pure function df_get_val_logical(this,col_index,row_index) result(val)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         logical :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        ind = this%type_loc(col_index,2)
 
-        val = this%ldata(j,ind)
+        val = this%ldata(row_index,ind)
 
     end function df_get_val_logical
 
-    pure function df_get_val_character(this,i,j) result(val)
+    pure function df_get_val_character(this,col_index,row_index) result(val)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         character(len=:),allocatable :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        ind = this%type_loc(col_index,2)
 
-        val = this%chdata(j,ind)
+        val = this%chdata(row_index,ind)
 
     end function df_get_val_character
 
-    pure function df_get_val_complex(this,i,j) result(val)
+    pure function df_get_val_complex(this,col_index,row_index) result(val)
         class(data_frame),intent(in) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         complex(rk) :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        ind = this%type_loc(col_index,2)
 
-        val = this%cdata(j,ind)
+        val = this%cdata(row_index,ind)
 
     end function df_get_val_complex
 
 
 ! ~~~~ Get single value from header
 
-    pure function df_get_val_header_real(this,header,j) result(val)
+    pure function df_get_val_header_real(this,header,row_index) result(val)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         real(rk) :: val
 
         integer :: ind, data_index
@@ -1813,15 +1813,15 @@ contains
 
         if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
         data_index = this%type_loc(ind,2)
-        val = this%rdata(j,data_index)
+        val = this%rdata(row_index,data_index)
 
 
     end function df_get_val_header_real
 
-    pure function df_get_val_header_integer(this,header,j) result(val)
+    pure function df_get_val_header_integer(this,header,row_index) result(val)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         integer(ik) :: val
 
         integer :: ind, data_index
@@ -1836,14 +1836,14 @@ contains
 
         if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
         data_index = this%type_loc(ind,2)
-        val = this%idata(j,data_index)
+        val = this%idata(row_index,data_index)
 
     end function df_get_val_header_integer
 
-    pure function df_get_val_header_logical(this,header,j) result(val)
+    pure function df_get_val_header_logical(this,header,row_index) result(val)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         logical :: val
 
         integer :: ind, data_index
@@ -1858,14 +1858,14 @@ contains
 
         if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
         data_index = this%type_loc(ind,2)
-        val = this%ldata(j,data_index)
+        val = this%ldata(row_index,data_index)
 
     end function df_get_val_header_logical
 
-    pure function df_get_val_header_character(this,header,j) result(val)
+    pure function df_get_val_header_character(this,header,row_index) result(val)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         character(len=:),allocatable :: val
 
         integer :: ind, data_index
@@ -1880,14 +1880,14 @@ contains
 
         if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
         data_index = this%type_loc(ind,2)
-        val = this%chdata(j,data_index)
+        val = this%chdata(row_index,data_index)
 
     end function df_get_val_header_character
 
-    pure function df_get_val_header_complex(this,header,j) result(val)
+    pure function df_get_val_header_complex(this,header,row_index) result(val)
         class(data_frame),intent(in) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         complex(rk) :: val
 
         integer :: ind, data_index
@@ -1902,90 +1902,90 @@ contains
 
         if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
         data_index = this%type_loc(ind,2)
-        val = this%cdata(j,data_index)
+        val = this%cdata(row_index,data_index)
 
     end function df_get_val_header_complex
 
 
 ! ~~~~ Change single value of data frame -> two indices
 
-    subroutine df_change_single_indices_real(this,i,j,val)
+    subroutine df_change_single_indices_real(this,col_index,row_index,val)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         real(rk),intent(in) :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= REAL_NUM) error stop 'column is not of real type'
+        ind = this%type_loc(col_index,2)
 
-        this%rdata(j,ind) = val
+        this%rdata(row_index,ind) = val
 
     end subroutine df_change_single_indices_real
 
-    subroutine df_change_single_indices_integer(this,i,j,val)
+    subroutine df_change_single_indices_integer(this,col_index,row_index,val)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         integer(ik),intent(in) :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        ind = this%type_loc(col_index,2)
 
-        this%idata(j,ind) = val
+        this%idata(row_index,ind) = val
 
     end subroutine df_change_single_indices_integer
 
-    subroutine df_change_single_indices_logical(this,i,j,val)
+    subroutine df_change_single_indices_logical(this,col_index,row_index,val)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         logical,intent(in) :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        ind = this%type_loc(col_index,2)
 
-        this%ldata(j,ind) = val
+        this%ldata(row_index,ind) = val
 
     end subroutine df_change_single_indices_logical
 
-    subroutine df_change_single_indices_character(this,i,j,val)
+    subroutine df_change_single_indices_character(this,col_index,row_index,val)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         character(len=*),intent(in) :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        ind = this%type_loc(col_index,2)
 
-        this%chdata(j,ind) = val
+        this%chdata(row_index,ind) = val
 
     end subroutine df_change_single_indices_character
 
-    subroutine df_change_single_indices_complex(this,i,j,val)
+    subroutine df_change_single_indices_complex(this,col_index,row_index,val)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i,j
+        integer,intent(in) :: col_index,row_index
         complex(rk),intent(in) :: val
 
         integer :: ind
 
-        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
-        ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        ind = this%type_loc(col_index,2)
 
-        this%cdata(j,ind) = val
+        this%cdata(row_index,ind) = val
 
     end subroutine df_change_single_indices_complex
 
 
 ! ~~~~ Change single value of data frame -> header 
 
-    subroutine df_change_single_header_real(this,header,j,val)
+    subroutine df_change_single_header_real(this,header,row_index,val)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         real(rk),intent(in) :: val
         
         integer :: ind, data_index
@@ -2000,14 +2000,14 @@ contains
 
         if (this%type_loc(ind,1) /= REAL_NUM) error stop 'column is not of real type'
         data_index = this%type_loc(ind,2)
-        this%rdata(j,data_index) = val
+        this%rdata(row_index,data_index) = val
 
     end subroutine df_change_single_header_real
 
-    subroutine df_change_single_header_integer(this,header,j,val)
+    subroutine df_change_single_header_integer(this,header,row_index,val)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         integer(ik),intent(in) :: val
         
         integer :: ind, data_index
@@ -2022,14 +2022,14 @@ contains
 
         if (this%type_loc(ind,1) /= INTEGER_NUM) error stop 'column is not of integer type'
         data_index = this%type_loc(ind,2)
-        this%idata(j,data_index) = val
+        this%idata(row_index,data_index) = val
 
     end subroutine df_change_single_header_integer
 
-    subroutine df_change_single_header_logical(this,header,j,val)
+    subroutine df_change_single_header_logical(this,header,row_index,val)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         logical,intent(in) :: val
         
         integer :: ind, data_index
@@ -2044,14 +2044,14 @@ contains
 
         if (this%type_loc(ind,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
         data_index = this%type_loc(ind,2)
-        this%ldata(j,data_index) = val
+        this%ldata(row_index,data_index) = val
 
     end subroutine df_change_single_header_logical
 
-    subroutine df_change_single_header_character(this,header,j,val)
+    subroutine df_change_single_header_character(this,header,row_index,val)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         character(len=*),intent(in) :: val
         
         integer :: ind, data_index
@@ -2066,14 +2066,14 @@ contains
 
         if (this%type_loc(ind,1) /= CHARACTER_NUM) error stop 'column is not of character type'
         data_index = this%type_loc(ind,2)
-        this%chdata(j,data_index) = val
+        this%chdata(row_index,data_index) = val
 
     end subroutine df_change_single_header_character
 
-    subroutine df_change_single_header_complex(this,header,j,val)
+    subroutine df_change_single_header_complex(this,header,row_index,val)
         class(data_frame),intent(inout) :: this
         character(len=*),intent(in) :: header
-        integer,intent(in) :: j
+        integer,intent(in) :: row_index
         complex(rk),intent(in) :: val
         
         integer :: ind, data_index
@@ -2088,16 +2088,16 @@ contains
 
         if (this%type_loc(ind,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
         data_index = this%type_loc(ind,2)
-        this%cdata(j,data_index) = val
+        this%cdata(row_index,data_index) = val
 
     end subroutine df_change_single_header_complex
 
 
 ! ~~~~ Change col of data frame with index
 
-    subroutine df_change_col_index_real(this,i,col)
+    subroutine df_change_col_index_real(this,col_index,col)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         real(rk),dimension(:),intent(in) :: col
 
         integer :: data_ind, col_len
@@ -2108,18 +2108,18 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%type_loc(i,1) /= REAL_NUM) error stop 'column is not of real type'
-        data_ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_ind = this%type_loc(col_index,2)
 
         if ((.not. this%enforce_length) .and. col_len > this%rrows_max) call this%stretch_cols_real(col_len)
         this%rdata(:col_len,data_ind) = col
-        if (.not. this%enforce_length) this%col_lens(i) = col_len
+        if (.not. this%enforce_length) this%col_lens(col_index) = col_len
 
     end subroutine df_change_col_index_real
 
-    subroutine df_change_col_index_integer(this,i,col)
+    subroutine df_change_col_index_integer(this,col_index,col)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         integer(ik),dimension(:),intent(in) :: col
 
         integer :: data_ind, col_len
@@ -2130,18 +2130,18 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%type_loc(i,1) /= INTEGER_NUM) error stop 'column is not of integer type'
-        data_ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_ind = this%type_loc(col_index,2)
 
         if ((.not. this%enforce_length) .and. col_len > this%irows_max) call this%stretch_cols_integer(col_len)
         this%idata(:col_len,data_ind) = col
-        if (.not. this%enforce_length) this%col_lens(i) = col_len
+        if (.not. this%enforce_length) this%col_lens(col_index) = col_len
 
     end subroutine df_change_col_index_integer
 
-    subroutine df_change_col_index_logical(this,i,col)
+    subroutine df_change_col_index_logical(this,col_index,col)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         logical,dimension(:),intent(in) :: col
 
         integer :: data_ind, col_len
@@ -2152,18 +2152,18 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%type_loc(i,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
-        data_ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_ind = this%type_loc(col_index,2)
 
         if ((.not. this%enforce_length) .and. col_len > this%lrows_max) call this%stretch_cols_logical(col_len)
         this%ldata(:col_len,data_ind) = col
-        if (.not. this%enforce_length) this%col_lens(i) = col_len
+        if (.not. this%enforce_length) this%col_lens(col_index) = col_len
 
     end subroutine df_change_col_index_logical
 
-    subroutine df_change_col_index_character(this,i,col)
+    subroutine df_change_col_index_character(this,col_index,col)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         character(len=*),dimension(:),intent(in) :: col
 
         integer :: data_ind, col_len
@@ -2174,18 +2174,18 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%type_loc(i,1) /= CHARACTER_NUM) error stop 'column is not of character type'
-        data_ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_ind = this%type_loc(col_index,2)
 
         if ((.not. this%enforce_length) .and. col_len > this%chrows_max) call this%stretch_cols_character(col_len)
         this%chdata(:col_len,data_ind) = col
-        if (.not. this%enforce_length) this%col_lens(i) = col_len
+        if (.not. this%enforce_length) this%col_lens(col_index) = col_len
 
     end subroutine df_change_col_index_character
 
-    subroutine df_change_col_index_complex(this,i,col)
+    subroutine df_change_col_index_complex(this,col_index,col)
         class(data_frame),intent(inout) :: this
-        integer,intent(in) :: i
+        integer,intent(in) :: col_index
         complex(rk),dimension(:),intent(in) :: col
 
         integer :: data_ind, col_len
@@ -2196,12 +2196,12 @@ contains
             error stop 'Different size columns in add col to data_frame'
         end if
 
-        if (this%type_loc(i,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
-        data_ind = this%type_loc(i,2)
+        if (this%type_loc(col_index,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_ind = this%type_loc(col_index,2)
 
         if ((.not. this%enforce_length) .and. col_len > this%crows_max) call this%stretch_cols_complex(col_len)
         this%cdata(:col_len,data_ind) = col
-        if (.not. this%enforce_length) this%col_lens(i) = col_len
+        if (.not. this%enforce_length) this%col_lens(col_index) = col_len
 
     end subroutine df_change_col_index_complex
 
