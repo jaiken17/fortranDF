@@ -20,7 +20,7 @@ module df_fortranDF
     type :: data_frame
         private
         
-        integer :: n, max_char_len
+        integer :: num_cols, max_char_len
         logical :: with_headers, enforce_length
         character(len=:),dimension(:),allocatable :: headers
 
@@ -199,7 +199,7 @@ contains
             this%enforce_length = .true.
         end if
 
-        this%n = 0
+        this%num_cols = 0
         this%rcols = -1
         this%icols = -1
         this%lcols = -1
@@ -231,7 +231,7 @@ contains
 
         if (allocated(this%headers)) deallocate(this%headers)
 
-        this%n = 0
+        this%num_cols = 0
         this%rcols = -1
         this%icols = -1
         this%lcols = -1
@@ -257,7 +257,7 @@ contains
         class(data_frame),intent(in) :: this
         integer :: n
 
-        n = this%n
+        n = this%num_cols
 
     end function df_get_num_cols
 
@@ -385,10 +385,10 @@ contains
 
         integer,dimension(:,:),allocatable :: type_loc_tmp
 
-        if (this%n > 0) then
-            allocate(type_loc_tmp(this%n+1,2))
-            type_loc_tmp(1:this%n,:) = this%type_loc
-            type_loc_tmp(this%n+1,:) = [dtype,loc]
+        if (this%num_cols > 0) then
+            allocate(type_loc_tmp(this%num_cols+1,2))
+            type_loc_tmp(1:this%num_cols,:) = this%type_loc
+            type_loc_tmp(this%num_cols+1,:) = [dtype,loc]
             this%type_loc = type_loc_tmp
         else
             allocate(this%type_loc(1,2))
@@ -441,7 +441,7 @@ contains
 
         end = size(col,dim=1)
 
-        n = this%n
+        n = this%num_cols
         rcols = this%rcols
         if (n > 0) then
             if (rcols > 0) then
@@ -457,10 +457,10 @@ contains
                 this%rcols = 1
                 call this%add_type_loc(REAL_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(REAL_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%rcols = 1
             allocate(this%rdata(this%rrows_max,1))
             this%rdata(:end,1) = col
@@ -481,7 +481,7 @@ contains
 
         end = size(col,dim=1)
 
-        n = this%n
+        n = this%num_cols
         icols = this%icols
         if (n > 0) then
             if (icols > 0) then
@@ -497,10 +497,10 @@ contains
                 this%icols = 1
                 call this%add_type_loc(INTEGER_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(INTEGER_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%icols = 1
             allocate(this%idata(this%irows_max,1))
             this%idata(:,1) = col
@@ -521,7 +521,7 @@ contains
 
         end = size(col,dim=1)
 
-        n = this%n
+        n = this%num_cols
         lcols = this%lcols
         if (n > 0) then
             if (lcols > 0) then
@@ -537,10 +537,10 @@ contains
                 this%lcols = 1
                 call this%add_type_loc(LOGICAL_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(LOGICAL_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%lcols = 1
             allocate(this%ldata(this%lrows_max,1))
             this%ldata(:,1) = col
@@ -561,7 +561,7 @@ contains
 
         end = size(col,dim=1)
 
-        n = this%n
+        n = this%num_cols
         chcols = this%chcols
         if (n > 0) then
             if (chcols > 0) then
@@ -577,10 +577,10 @@ contains
                 this%chcols = 1
                 call this%add_type_loc(CHARACTER_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(CHARACTER_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%chcols = 1
             allocate(character(this%max_char_len) :: this%chdata(this%chrows_max,1))
             this%chdata(:,1) = col
@@ -601,7 +601,7 @@ contains
 
         end = size(col,dim=1)
 
-        n = this%n
+        n = this%num_cols
         ccols = this%ccols
         if (n > 0) then
             if (ccols > 0) then
@@ -616,10 +616,10 @@ contains
                 this%ccols = 1
                 call this%add_type_loc(COMPLEX_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(COMPLEX_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%ccols = 1
             allocate(this%cdata(this%crows_max,1))
             this%cdata(:,1) = col
@@ -676,7 +676,7 @@ contains
                 this%nrows_max = col_len
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -724,7 +724,7 @@ contains
                 this%nrows_max = col_len
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -772,7 +772,7 @@ contains
                 this%nrows_max = col_len
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -820,7 +820,7 @@ contains
                 this%nrows_max = col_len
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -868,7 +868,7 @@ contains
                 this%nrows_max = col_len
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -1001,7 +1001,7 @@ contains
         
         if (this%rrows_max < 0) this%rrows_max = col_size
 
-        n = this%n
+        n = this%num_cols
         rcols = this%rcols
         if (n > 0) then
             if (rcols > 0) then
@@ -1015,10 +1015,10 @@ contains
                 this%rcols = 1
                 call this%add_type_loc(REAL_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(REAL_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%rcols = 1
             allocate(this%rdata(this%rrows_max,1))
         end if
@@ -1037,7 +1037,7 @@ contains
         
         if (this%irows_max < 0) this%irows_max = col_size
 
-        n = this%n
+        n = this%num_cols
         icols = this%icols
         if (n > 0) then
             if (icols > 0) then
@@ -1051,10 +1051,10 @@ contains
                 this%icols = 1
                 call this%add_type_loc(INTEGER_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(INTEGER_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%icols = 1
             allocate(this%idata(this%irows_max,1))
         end if
@@ -1073,7 +1073,7 @@ contains
         
         if (this%lrows_max < 0) this%lrows_max = col_size
 
-        n = this%n
+        n = this%num_cols
         lcols = this%lcols
         if (n > 0) then
             if (lcols > 0) then
@@ -1087,10 +1087,10 @@ contains
                 this%lcols = 1
                 call this%add_type_loc(LOGICAL_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(LOGICAL_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%lcols = 1
             allocate(this%ldata(this%lrows_max,1))
         end if
@@ -1109,7 +1109,7 @@ contains
         
         if (this%chrows_max < 0) this%chrows_max = col_size
 
-        n = this%n
+        n = this%num_cols
         chcols = this%chcols
         if (n > 0) then
             if (chcols > 0) then
@@ -1123,10 +1123,10 @@ contains
                 this%chcols = 1
                 call this%add_type_loc(CHARACTER_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(CHARACTER_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%chcols = 1
             allocate(character(this%max_char_len) :: this%chdata(this%chrows_max,1))
         end if
@@ -1145,7 +1145,7 @@ contains
         
         if (this%crows_max < 0) this%crows_max = col_size
 
-        n = this%n
+        n = this%num_cols
         ccols = this%ccols
         if (n > 0) then
             if (ccols > 0) then
@@ -1159,10 +1159,10 @@ contains
                 this%ccols = 1
                 call this%add_type_loc(COMPLEX_NUM,1)
             end if
-            this%n = n + 1
+            this%num_cols = n + 1
         else
             call this%add_type_loc(COMPLEX_NUM,1)
-            this%n = 1
+            this%num_cols = 1
             this%ccols = 1
             allocate(this%cdata(this%crows_max,1))
         end if
@@ -1185,7 +1185,7 @@ contains
                 this%nrows_max = col_size
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -1230,7 +1230,7 @@ contains
                 this%nrows_max = col_size
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -1275,7 +1275,7 @@ contains
                 this%nrows_max = col_size
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -1320,7 +1320,7 @@ contains
                 this%nrows_max = col_size
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -1365,7 +1365,7 @@ contains
                 this%nrows_max = col_size
         end if
 
-        if (this%n < 1) then
+        if (this%num_cols < 1) then
             this%with_headers = .false.
             if (present(header)) this%with_headers = .true.
         end if
@@ -2408,7 +2408,7 @@ contains
         cfmt = "2"//trim(adjustl(rfmt))
 
 
-        num_cols = this%n
+        num_cols = this%num_cols
         len_cols = this%nrows_max
         
         call write_horiz()
