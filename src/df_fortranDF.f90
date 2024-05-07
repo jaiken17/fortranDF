@@ -44,6 +44,7 @@ module df_fortranDF
         procedure,public :: new => df_constructor
         procedure,public :: destroy => df_destructor
         procedure,public :: is_initialized => df_is_initialized
+        procedure,public :: length_enforced => df_is_length_enforced
 
         procedure,public :: ncols => df_get_num_cols
         procedure :: df_get_num_rows, df_get_nrows_max
@@ -364,6 +365,14 @@ contains
         is_initialized = this%initialized
 
     end function df_is_initialized
+
+    pure function df_is_length_enforced(this) result(enforce_length)
+        class(data_frame),intent(in) :: this
+        logical :: enforce_length
+
+        enforce_length = this%enforce_length
+
+    end function df_is_length_enforced
 
 ! ~~~~ get header
 

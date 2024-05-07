@@ -34,6 +34,7 @@ program main
     call df%append(["test1","test2","test3","test4"])
     call df%write()
 
+    print*, "variable length cols?:   ", .not.df%length_enforced()
     print*, "num elems in real col:   ", df%nrows(2)
     print*, "num elems in char col:   ", df%nrows(3)
     print*, "most num elems in a col: ", df%nrows()
@@ -62,6 +63,7 @@ program main
     call df%new()
     call df%read("app/test_file.txt",.true.)
     call df%write()
+    print*, "variable length cols?:", .not.df%length_enforced()
     print*, "Type of 'header2':",df%dtype("header2")
     print*, "Type values: "
     print*, "real:      ", REAL_NUM
