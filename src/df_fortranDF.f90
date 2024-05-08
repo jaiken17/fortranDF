@@ -129,22 +129,27 @@ module df_fortranDF
                      df_get_col_header_logical,     &
                      df_get_col_header_character,   &
                      df_get_col_header_complex
+        procedure :: df_get_mult_col_header_real,       &
+                     df_get_mult_col_header_integer,    &
+                     df_get_mult_col_header_logical,    &
+                     df_get_mult_col_header_character,  &
+                     df_get_mult_col_header_complex
 
         generic,public :: getr => df_get_val_real, df_get_val_header_real,              &
                                   df_get_col_ind_real, df_get_col_header_real,          &
-                                  df_get_mult_col_ind_real
+                                  df_get_mult_col_ind_real,df_get_mult_col_header_real
         generic,public :: geti => df_get_val_integer, df_get_val_header_integer,        &
                                   df_get_col_ind_integer, df_get_col_header_integer,    &
-                                  df_get_mult_col_ind_integer
+                                  df_get_mult_col_ind_integer,df_get_mult_col_header_integer
         generic,public :: getl => df_get_val_logical, df_get_val_header_logical,        &
                                   df_get_col_ind_logical, df_get_col_header_logical,    &
-                                  df_get_mult_col_ind_logical
+                                  df_get_mult_col_ind_logical,df_get_mult_col_header_logical
         generic,public :: getch => df_get_val_character, df_get_val_header_character,       &
                                    df_get_col_ind_character, df_get_col_header_character,   &
-                                   df_get_mult_col_ind_character
+                                   df_get_mult_col_ind_character,df_get_mult_col_header_character
         generic,public :: getc => df_get_val_complex, df_get_val_header_complex,        &
                                   df_get_col_ind_complex, df_get_col_header_complex,    &
-                                  df_get_mult_col_ind_complex
+                                  df_get_mult_col_ind_complex,df_get_mult_col_header_complex
 
         procedure :: df_change_single_indices_real,         &
                      df_change_single_indices_integer,      &
@@ -1711,7 +1716,6 @@ contains
 
     end function df_get_mult_col_ind_complex
 
-
     
 ! ~~~~ Get Column DF from header
 
@@ -1881,6 +1885,182 @@ contains
         col = this%cdata(:end,data_index)
 
     end function df_get_col_header_complex
+
+
+! ~~~~ Get multiple cols header
+
+    pure function df_get_mult_col_header_real(this,headers,full) result(cols)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: headers(:)
+        logical,intent(in),optional :: full ! return full column
+        real(rk),dimension(:,:),allocatable :: cols
+
+        integer :: max_len, i
+        integer,allocatable :: col_indices(:), data_indices(:)
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= REAL_NUM) error stop 'column is not of real type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+
+        if (present(full)) then
+            if (full) max_len = this%rrows_max
+        end if
+
+        cols = this%rdata(:max_len,data_indices)
+
+    end function df_get_mult_col_header_real
+
+    pure function df_get_mult_col_header_integer(this,headers,full) result(cols)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: headers(:)
+        logical,intent(in),optional :: full ! return full column
+        integer(ik),dimension(:,:),allocatable :: cols
+
+        integer :: max_len, i
+        integer,allocatable :: col_indices(:), data_indices(:)
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+
+        if (present(full)) then
+            if (full) max_len = this%irows_max
+        end if
+
+        cols = this%idata(:max_len,data_indices)
+
+    end function df_get_mult_col_header_integer
+
+
+    pure function df_get_mult_col_header_logical(this,headers,full) result(cols)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: headers(:)
+        logical,intent(in),optional :: full ! return full column
+        logical,dimension(:,:),allocatable :: cols
+
+        integer :: max_len, i
+        integer,allocatable :: col_indices(:), data_indices(:)
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+
+        if (present(full)) then
+            if (full) max_len = this%lrows_max
+        end if
+
+        cols = this%ldata(:max_len,data_indices)
+
+    end function df_get_mult_col_header_logical
+
+
+    pure function df_get_mult_col_header_character(this,headers,full) result(cols)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: headers(:)
+        logical,intent(in),optional :: full ! return full column
+        character(:),dimension(:,:),allocatable :: cols
+
+        integer :: max_len, i
+        integer,allocatable :: col_indices(:), data_indices(:)
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+
+        if (present(full)) then
+            if (full) max_len = this%chrows_max
+        end if
+
+        cols = this%chdata(:max_len,data_indices)
+
+    end function df_get_mult_col_header_character
+
+
+    pure function df_get_mult_col_header_complex(this,headers,full) result(cols)
+        class(data_frame),intent(in) :: this
+        character(len=*),intent(in) :: headers(:)
+        logical,intent(in),optional :: full ! return full column
+        complex(rk),dimension(:,:),allocatable :: cols
+
+        integer :: max_len, i
+        integer,allocatable :: col_indices(:), data_indices(:)
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+
+        if (present(full)) then
+            if (full) max_len = this%crows_max
+        end if
+
+        cols = this%cdata(:max_len,data_indices)
+
+    end function df_get_mult_col_header_complex
 
 
 ! ~~~~ Get Single Val DF
