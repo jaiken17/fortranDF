@@ -119,6 +119,11 @@ module df_fortranDF
                      df_get_col_ind_logical,    &
                      df_get_col_ind_character,  &
                      df_get_col_ind_complex
+        procedure :: df_get_mult_col_ind_real,      &
+                     df_get_mult_col_ind_integer,   &
+                     df_get_mult_col_ind_logical,   &
+                     df_get_mult_col_ind_character, &
+                     df_get_mult_col_ind_complex
         procedure :: df_get_col_header_real,        &
                      df_get_col_header_integer,     &
                      df_get_col_header_logical,     &
@@ -126,15 +131,20 @@ module df_fortranDF
                      df_get_col_header_complex
 
         generic,public :: getr => df_get_val_real, df_get_val_header_real,              &
-                                  df_get_col_ind_real, df_get_col_header_real
+                                  df_get_col_ind_real, df_get_col_header_real,          &
+                                  df_get_mult_col_ind_real
         generic,public :: geti => df_get_val_integer, df_get_val_header_integer,        &
-                                  df_get_col_ind_integer, df_get_col_header_integer
+                                  df_get_col_ind_integer, df_get_col_header_integer,    &
+                                  df_get_mult_col_ind_integer
         generic,public :: getl => df_get_val_logical, df_get_val_header_logical,        &
-                                  df_get_col_ind_logical, df_get_col_header_logical
-        generic,public :: getch => df_get_val_character, df_get_val_header_character,   &
-                                   df_get_col_ind_character, df_get_col_header_character
+                                  df_get_col_ind_logical, df_get_col_header_logical,    &
+                                  df_get_mult_col_ind_logical
+        generic,public :: getch => df_get_val_character, df_get_val_header_character,       &
+                                   df_get_col_ind_character, df_get_col_header_character,   &
+                                   df_get_mult_col_ind_character
         generic,public :: getc => df_get_val_complex, df_get_val_header_complex,        &
-                                  df_get_col_ind_complex, df_get_col_header_complex
+                                  df_get_col_ind_complex, df_get_col_header_complex,    &
+                                  df_get_mult_col_ind_complex
 
         procedure :: df_change_single_indices_real,         &
                      df_change_single_indices_integer,      &
@@ -1559,6 +1569,150 @@ contains
     end function df_get_col_ind_complex
 
 
+! ~~~~ Get multiple columns from indices
+
+    pure function df_get_mult_col_ind_real(this,col_indices,full) result(cols)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:)
+        logical,intent(in),optional :: full ! return full column
+        real(rk),dimension(:,:),allocatable :: cols
+
+        integer,allocatable :: indices(:)
+        integer :: i, max_len
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= REAL_NUM) error stop 'column is not of real type'
+        end do
+        indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+        
+        if (present(full)) then
+            if (full) max_len = this%rrows_max
+        end if
+
+        cols = this%rdata(:max_len,indices)
+
+    end function df_get_mult_col_ind_real
+
+    pure function df_get_mult_col_ind_integer(this,col_indices,full) result(cols)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:)
+        logical,intent(in),optional :: full ! return full column
+        integer(ik),dimension(:,:),allocatable :: cols
+
+        integer,allocatable :: indices(:)
+        integer :: i, max_len
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        end do
+        indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+        
+        if (present(full)) then
+            if (full) max_len = this%irows_max
+        end if
+
+        cols = this%idata(:max_len,indices)
+
+    end function df_get_mult_col_ind_integer
+
+    pure function df_get_mult_col_ind_logical(this,col_indices,full) result(cols)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:)
+        logical,intent(in),optional :: full ! return full column
+        logical,dimension(:,:),allocatable :: cols
+
+        integer,allocatable :: indices(:)
+        integer :: i, max_len
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        end do
+        indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+        
+        if (present(full)) then
+            if (full) max_len = this%lrows_max
+        end if
+
+        cols = this%ldata(:max_len,indices)
+
+    end function df_get_mult_col_ind_logical
+
+    pure function df_get_mult_col_ind_character(this,col_indices,full) result(cols)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:)
+        logical,intent(in),optional :: full ! return full column
+        character(:),dimension(:,:),allocatable :: cols
+
+        integer,allocatable :: indices(:)
+        integer :: i, max_len
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        end do
+        indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+        
+        if (present(full)) then
+            if (full) max_len = this%chrows_max
+        end if
+
+        cols = this%chdata(:max_len,indices)
+
+    end function df_get_mult_col_ind_character
+
+    pure function df_get_mult_col_ind_complex(this,col_indices,full) result(cols)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:)
+        logical,intent(in),optional :: full ! return full column
+        complex(rk),dimension(:,:),allocatable :: cols
+
+        integer,allocatable :: indices(:)
+        integer :: i, max_len
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        end do
+        indices = this%type_loc(col_indices,2)
+
+        if (.not. this%enforce_length) then
+            max_len = maxval(this%col_lens(col_indices))
+        else
+            max_len = this%nrows_max
+        end if
+        
+        if (present(full)) then
+            if (full) max_len = this%crows_max
+        end if
+
+        cols = this%cdata(:max_len,indices)
+
+    end function df_get_mult_col_ind_complex
+
+
+    
 ! ~~~~ Get Column DF from header
 
     pure function df_get_col_header_real(this,header,full) result(col)
