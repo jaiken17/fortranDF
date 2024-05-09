@@ -135,21 +135,56 @@ module df_fortranDF
                      df_get_mult_col_header_character,  &
                      df_get_mult_col_header_complex
 
+        procedure :: df_get_partial_col_ind_real,       &
+                     df_get_partial_col_ind_integer,    &
+                     df_get_partial_col_ind_logical,    &
+                     df_get_partial_col_ind_character,  &
+                     df_get_partial_col_ind_complex
+        procedure :: df_get_mult_partial_col_ind_real,      &
+                     df_get_mult_partial_col_ind_integer,   &
+                     df_get_mult_partial_col_ind_logical,   &
+                     df_get_mult_partial_col_ind_character, &
+                     df_get_mult_partial_col_ind_complex
+        procedure :: df_get_partial_col_header_real,        &
+                     df_get_partial_col_header_integer,     &
+                     df_get_partial_col_header_logical,     &
+                     df_get_partial_col_header_character,   &
+                     df_get_partial_col_header_complex
+        procedure :: df_get_mult_partial_col_header_real,       &
+                     df_get_mult_partial_col_header_integer,    &
+                     df_get_mult_partial_col_header_logical,    &
+                     df_get_mult_partial_col_header_character,  &
+                     df_get_mult_partial_col_header_complex
+
         generic,public :: getr => df_get_val_real, df_get_val_header_real,              &
                                   df_get_col_ind_real, df_get_col_header_real,          &
-                                  df_get_mult_col_ind_real,df_get_mult_col_header_real
+                                  df_get_mult_col_ind_real,df_get_mult_col_header_real, &
+                                  df_get_partial_col_ind_real,df_get_partial_col_header_real,   &
+                                  df_get_mult_partial_col_ind_real,df_get_mult_partial_col_header_real
+
         generic,public :: geti => df_get_val_integer, df_get_val_header_integer,        &
                                   df_get_col_ind_integer, df_get_col_header_integer,    &
-                                  df_get_mult_col_ind_integer,df_get_mult_col_header_integer
+                                  df_get_mult_col_ind_integer,df_get_mult_col_header_integer, &
+                                  df_get_partial_col_ind_integer,df_get_partial_col_header_integer,   &
+                                  df_get_mult_partial_col_ind_integer,df_get_mult_partial_col_header_integer
+
         generic,public :: getl => df_get_val_logical, df_get_val_header_logical,        &
                                   df_get_col_ind_logical, df_get_col_header_logical,    &
-                                  df_get_mult_col_ind_logical,df_get_mult_col_header_logical
+                                  df_get_mult_col_ind_logical,df_get_mult_col_header_logical, &
+                                  df_get_partial_col_ind_logical,df_get_partial_col_header_logical,   &
+                                  df_get_mult_partial_col_ind_logical,df_get_mult_partial_col_header_logical
+
         generic,public :: getch => df_get_val_character, df_get_val_header_character,       &
                                    df_get_col_ind_character, df_get_col_header_character,   &
-                                   df_get_mult_col_ind_character,df_get_mult_col_header_character
+                                   df_get_mult_col_ind_character,df_get_mult_col_header_character, &
+                                   df_get_partial_col_ind_character,df_get_partial_col_header_character,   &
+                                   df_get_mult_partial_col_ind_character,df_get_mult_partial_col_header_character
+
         generic,public :: getc => df_get_val_complex, df_get_val_header_complex,        &
                                   df_get_col_ind_complex, df_get_col_header_complex,    &
-                                  df_get_mult_col_ind_complex,df_get_mult_col_header_complex
+                                  df_get_mult_col_ind_complex,df_get_mult_col_header_complex, &
+                                  df_get_partial_col_ind_complex,df_get_partial_col_header_complex,   &
+                                  df_get_mult_partial_col_ind_complex,df_get_mult_partial_col_header_complex
 
         procedure :: df_change_single_indices_real,         &
                      df_change_single_indices_integer,      &
@@ -2248,6 +2283,635 @@ contains
         val = this%cdata(row_index,data_index)
 
     end function df_get_val_header_complex
+
+
+! ~~~~ Get partial column index
+
+    pure function df_get_partial_col_ind_real(this,col_index,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, start, end
+        real(rk),dimension(:),allocatable :: vals
+
+        integer :: data_index, max_end, min_start
+
+        if (this%type_loc(col_index,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%rdata(start:end,data_index)
+
+    end function df_get_partial_col_ind_real
+
+    pure function df_get_partial_col_ind_integer(this,col_index,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, start, end
+        integer(ik),dimension(:),allocatable :: vals
+
+        integer :: data_index, max_end, min_start
+
+        if (this%type_loc(col_index,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%idata(start:end,data_index)
+
+    end function df_get_partial_col_ind_integer
+
+
+    pure function df_get_partial_col_ind_logical(this,col_index,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, start, end
+        logical,dimension(:),allocatable :: vals
+
+        integer :: data_index, max_end, min_start
+
+        if (this%type_loc(col_index,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%ldata(start:end,data_index)
+
+    end function df_get_partial_col_ind_logical
+
+
+    pure function df_get_partial_col_ind_character(this,col_index,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, start, end
+        character(:),dimension(:),allocatable :: vals
+
+        integer :: data_index, max_end, min_start
+
+        if (this%type_loc(col_index,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%chdata(start:end,data_index)
+
+    end function df_get_partial_col_ind_character
+
+
+    pure function df_get_partial_col_ind_complex(this,col_index,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, start, end
+        complex(rk),dimension(:),allocatable :: vals
+
+        integer :: data_index, max_end, min_start
+
+        if (this%type_loc(col_index,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%cdata(start:end,data_index)
+
+    end function df_get_partial_col_ind_complex
+
+
+! ~~~~ Get multiple partial columns using indices
+
+    pure function df_get_mult_partial_col_ind_real(this,col_indices,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), start, end
+        real(rk),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i, max_end, min_start
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= REAL_NUM) error stop 'column is not of real type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%rdata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_ind_real
+    
+    pure function df_get_mult_partial_col_ind_integer(this,col_indices,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), start, end
+        integer(ik),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i, max_end, min_start
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%idata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_ind_integer
+    
+    pure function df_get_mult_partial_col_ind_logical(this,col_indices,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), start, end
+        logical,dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i, max_end, min_start
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%ldata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_ind_logical
+    
+    pure function df_get_mult_partial_col_ind_character(this,col_indices,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), start, end
+        character(:),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i, max_end, min_start
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%chdata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_ind_character
+    
+    pure function df_get_mult_partial_col_ind_complex(this,col_indices,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), start, end
+        complex(rk),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i, max_end, min_start
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%cdata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_ind_complex
+
+
+! ~~~~ Get partial column header
+
+    pure function df_get_partial_col_header_real(this,header,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: start, end
+        real(rk),dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%rdata(start:end,data_index)
+
+    end function df_get_partial_col_header_real
+
+    pure function df_get_partial_col_header_integer(this,header,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: start, end
+        integer(ik),dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%idata(start:end,data_index)
+
+    end function df_get_partial_col_header_integer
+
+    pure function df_get_partial_col_header_logical(this,header,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: start, end
+        logical,dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%ldata(start:end,data_index)
+
+    end function df_get_partial_col_header_logical
+
+    pure function df_get_partial_col_header_character(this,header,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: start, end
+        character(:),dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%chdata(start:end,data_index)
+
+    end function df_get_partial_col_header_character
+
+    pure function df_get_partial_col_header_complex(this,header,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: start, end
+        complex(rk),dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(col_index,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = this%col_lens(col_index)
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%cdata(start:end,data_index)
+
+    end function df_get_partial_col_header_complex
+
+! ~~~~ Get multiple partial columns using headers
+
+    pure function df_get_mult_partial_col_header_real(this,headers,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: start, end
+        real(rk),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= REAL_NUM) error stop 'column is not of real type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%rdata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_header_real
+
+    pure function df_get_mult_partial_col_header_integer(this,headers,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: start, end
+        integer(ik),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%idata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_header_integer
+
+    pure function df_get_mult_partial_col_header_logical(this,headers,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: start, end
+        logical,dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%ldata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_header_logical
+
+    pure function df_get_mult_partial_col_header_character(this,headers,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: start, end
+        character(:),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%chdata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_header_character
+
+    pure function df_get_mult_partial_col_header_complex(this,headers,start,end) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: start, end
+        complex(rk),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i, max_end, min_start
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+
+        min_start = 1   ! 1 indexed
+        if (.not. this%enforce_length) then
+            max_end = maxval(this%col_lens(col_indices))
+        else
+            max_end = this%nrows_max
+        end if
+        
+        ! MAYBE JUST USE IMPLICIT ARRAY ERRORS
+        ! if (end>max_end) error stop 'end outside of column range'
+        ! if (start<min_start) error stop 'start outside of column range'
+        ! if (start>end) error stop 'start must be smaller than end'
+
+        vals = this%cdata(start:end,data_indices)
+
+    end function df_get_mult_partial_col_header_complex
 
 
 ! ~~~~ Change single value of data frame -> two indices
