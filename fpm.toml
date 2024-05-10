@@ -15,4 +15,6 @@ library = false
 implicit-typing = false
 implicit-external = false
 source-form = "free"
+[dependencies]
+stdlib = "*"
 
