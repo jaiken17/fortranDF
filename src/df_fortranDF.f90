@@ -155,36 +155,82 @@ module df_fortranDF
                      df_get_mult_partial_col_header_logical,    &
                      df_get_mult_partial_col_header_character,  &
                      df_get_mult_partial_col_header_complex
+        procedure :: df_get_indexed_partial_col_ind_real,       &
+                     df_get_indexed_partial_col_ind_integer,    &
+                     df_get_indexed_partial_col_ind_logical,    &
+                     df_get_indexed_partial_col_ind_character,  &
+                     df_get_indexed_partial_col_ind_complex
+        procedure :: df_get_mult_indexed_partial_col_ind_real,      &
+                     df_get_mult_indexed_partial_col_ind_integer,   &
+                     df_get_mult_indexed_partial_col_ind_logical,   &
+                     df_get_mult_indexed_partial_col_ind_character, &
+                     df_get_mult_indexed_partial_col_ind_complex
+        procedure :: df_get_indexed_partial_col_header_real,        &
+                     df_get_indexed_partial_col_header_integer,     &
+                     df_get_indexed_partial_col_header_logical,     &
+                     df_get_indexed_partial_col_header_character,   &
+                     df_get_indexed_partial_col_header_complex
+        procedure :: df_get_mult_indexed_partial_col_header_real,       &
+                     df_get_mult_indexed_partial_col_header_integer,    &
+                     df_get_mult_indexed_partial_col_header_logical,    &
+                     df_get_mult_indexed_partial_col_header_character,  &
+                     df_get_mult_indexed_partial_col_header_complex
+        
 
         generic,public :: getr => df_get_val_real, df_get_val_header_real,              &
                                   df_get_col_ind_real, df_get_col_header_real,          &
                                   df_get_mult_col_ind_real,df_get_mult_col_header_real, &
                                   df_get_partial_col_ind_real,df_get_partial_col_header_real,   &
-                                  df_get_mult_partial_col_ind_real,df_get_mult_partial_col_header_real
+                                  df_get_mult_partial_col_ind_real,                             &
+                                  df_get_mult_partial_col_header_real,                          &
+                                  df_get_indexed_partial_col_ind_real,                          &
+                                  df_get_mult_indexed_partial_col_ind_real,                     &
+                                  df_get_indexed_partial_col_header_real,                       &
+                                  df_get_mult_indexed_partial_col_header_real
 
         generic,public :: geti => df_get_val_integer, df_get_val_header_integer,        &
                                   df_get_col_ind_integer, df_get_col_header_integer,    &
                                   df_get_mult_col_ind_integer,df_get_mult_col_header_integer, &
-                                  df_get_partial_col_ind_integer,df_get_partial_col_header_integer,   &
-                                  df_get_mult_partial_col_ind_integer,df_get_mult_partial_col_header_integer
+                                  df_get_partial_col_ind_integer,df_get_partial_col_header_integer,     &
+                                  df_get_mult_partial_col_ind_integer,                                  &
+                                  df_get_mult_partial_col_header_integer,                               &
+                                  df_get_indexed_partial_col_ind_integer,                               &
+                                  df_get_mult_indexed_partial_col_ind_integer,                          &
+                                  df_get_indexed_partial_col_header_integer,                            &
+                                  df_get_mult_indexed_partial_col_header_integer
 
         generic,public :: getl => df_get_val_logical, df_get_val_header_logical,        &
                                   df_get_col_ind_logical, df_get_col_header_logical,    &
                                   df_get_mult_col_ind_logical,df_get_mult_col_header_logical, &
-                                  df_get_partial_col_ind_logical,df_get_partial_col_header_logical,   &
-                                  df_get_mult_partial_col_ind_logical,df_get_mult_partial_col_header_logical
+                                  df_get_partial_col_ind_logical,df_get_partial_col_header_logical,     &
+                                  df_get_mult_partial_col_ind_logical,                                  &
+                                  df_get_mult_partial_col_header_logical,                               &
+                                  df_get_indexed_partial_col_ind_logical,                               &
+                                  df_get_mult_indexed_partial_col_ind_logical,                          &
+                                  df_get_indexed_partial_col_header_logical,                            &
+                                  df_get_mult_indexed_partial_col_header_logical
 
         generic,public :: getch => df_get_val_character, df_get_val_header_character,       &
                                    df_get_col_ind_character, df_get_col_header_character,   &
                                    df_get_mult_col_ind_character,df_get_mult_col_header_character, &
-                                   df_get_partial_col_ind_character,df_get_partial_col_header_character,   &
-                                   df_get_mult_partial_col_ind_character,df_get_mult_partial_col_header_character
+                                   df_get_partial_col_ind_character,df_get_partial_col_header_character,    &
+                                   df_get_mult_partial_col_ind_character,                                   &
+                                   df_get_mult_partial_col_header_character,                                &
+                                   df_get_indexed_partial_col_ind_character,                                &
+                                   df_get_mult_indexed_partial_col_ind_character,                           &
+                                   df_get_indexed_partial_col_header_character,                             &
+                                   df_get_mult_indexed_partial_col_header_character
 
         generic,public :: getc => df_get_val_complex, df_get_val_header_complex,        &
                                   df_get_col_ind_complex, df_get_col_header_complex,    &
                                   df_get_mult_col_ind_complex,df_get_mult_col_header_complex, &
-                                  df_get_partial_col_ind_complex,df_get_partial_col_header_complex,   &
-                                  df_get_mult_partial_col_ind_complex,df_get_mult_partial_col_header_complex
+                                  df_get_partial_col_ind_complex,df_get_partial_col_header_complex,     &
+                                  df_get_mult_partial_col_ind_complex,                                  &
+                                  df_get_mult_partial_col_header_complex,                               &
+                                  df_get_indexed_partial_col_ind_complex,                               &
+                                  df_get_mult_indexed_partial_col_ind_complex,                          &
+                                  df_get_indexed_partial_col_header_complex,                            &
+                                  df_get_mult_indexed_partial_col_header_complex
 
         procedure :: df_change_single_indices_real,         &
                      df_change_single_indices_integer,      &
@@ -2912,6 +2958,413 @@ contains
         vals = this%cdata(start:end,data_indices)
 
     end function df_get_mult_partial_col_header_complex
+
+
+! ~~~~ Get indexed partial col using col indices
+
+    pure function df_get_indexed_partial_col_ind_real(this,col_index,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, row_indices(:)
+        real(rk),dimension(:),allocatable :: vals
+
+        integer :: data_index
+
+        if (this%type_loc(col_index,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%rdata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_ind_real
+
+    pure function df_get_indexed_partial_col_ind_integer(this,col_index,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, row_indices(:)
+        integer(ik),dimension(:),allocatable :: vals
+
+        integer :: data_index
+
+        if (this%type_loc(col_index,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%idata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_ind_integer
+    
+    pure function df_get_indexed_partial_col_ind_logical(this,col_index,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, row_indices(:)
+        logical,dimension(:),allocatable :: vals
+
+        integer :: data_index
+
+        if (this%type_loc(col_index,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%ldata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_ind_logical
+
+    pure function df_get_indexed_partial_col_ind_character(this,col_index,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, row_indices(:)
+        character(:),dimension(:),allocatable :: vals
+
+        integer :: data_index
+
+        if (this%type_loc(col_index,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%chdata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_ind_character
+
+    pure function df_get_indexed_partial_col_ind_complex(this,col_index,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_index, row_indices(:)
+        complex(rk),dimension(:),allocatable :: vals
+
+        integer :: data_index
+
+        if (this%type_loc(col_index,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%cdata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_ind_complex
+
+
+! ~~~~ Get multiple indexed partial col using col indices
+
+    pure function df_get_mult_indexed_partial_col_ind_real(this,col_indices,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), row_indices(:)
+        real(rk),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= REAL_NUM) error stop 'column is not of real type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%rdata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_ind_real
+
+    pure function df_get_mult_indexed_partial_col_ind_integer(this,col_indices,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), row_indices(:)
+        integer(ik),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%idata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_ind_integer
+
+    pure function df_get_mult_indexed_partial_col_ind_logical(this,col_indices,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), row_indices(:)
+        logical,dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%ldata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_ind_logical
+
+    pure function df_get_mult_indexed_partial_col_ind_character(this,col_indices,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), row_indices(:)
+        character(:),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%chdata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_ind_character
+
+    pure function df_get_mult_indexed_partial_col_ind_complex(this,col_indices,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        integer,intent(in) :: col_indices(:), row_indices(:)
+        complex(rk),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:)
+        integer :: i
+
+        do i=1,size(col_indices,dim=1)
+            if (this%type_loc(col_indices(i),1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        end do
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%cdata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_ind_complex
+
+
+! ~~~~ Get indexed partial col using col header
+
+    pure function df_get_indexed_partial_col_header_real(this,header,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: row_indices(:)
+        real(rk),dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= REAL_NUM) error stop 'column is not of real type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%rdata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_header_real
+
+    pure function df_get_indexed_partial_col_header_integer(this,header,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: row_indices(:)
+        integer(ik),dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%idata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_header_integer
+
+    pure function df_get_indexed_partial_col_header_logical(this,header,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: row_indices(:)
+        logical,dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%ldata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_header_logical
+
+    pure function df_get_indexed_partial_col_header_character(this,header,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: row_indices(:)
+        character(:),dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%chdata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_header_character
+
+    pure function df_get_indexed_partial_col_header_complex(this,header,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: header
+        integer,intent(in) :: row_indices(:)
+        complex(rk),dimension(:),allocatable :: vals
+
+        integer :: data_index, col_index
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        col_index = findloc(this%headers,trim(adjustl(header)),dim=1)
+        if (col_index < 1) error stop 'header not present in data frame'
+
+        if (this%type_loc(col_index,1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        data_index = this%type_loc(col_index,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%cdata(row_indices,data_index)
+
+    end function df_get_indexed_partial_col_header_complex
+
+
+! ~~~~ Get multiple indexed partial cols using col headers
+
+    pure function df_get_mult_indexed_partial_col_header_real(this,headers,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: row_indices(:)
+        real(rk),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= REAL_NUM) error stop 'column is not of real type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%rdata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_header_real
+
+    pure function df_get_mult_indexed_partial_col_header_integer(this,headers,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: row_indices(:)
+        integer(ik),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= INTEGER_NUM) error stop 'column is not of integer type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%idata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_header_integer
+
+    pure function df_get_mult_indexed_partial_col_header_logical(this,headers,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: row_indices(:)
+        logical,dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= LOGICAL_NUM) error stop 'column is not of logical type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%ldata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_header_logical
+
+    pure function df_get_mult_indexed_partial_col_header_character(this,headers,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: row_indices(:)
+        character(:),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= CHARACTER_NUM) error stop 'column is not of character type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%chdata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_header_character
+
+    pure function df_get_mult_indexed_partial_col_header_complex(this,headers,row_indices) result(vals)
+        class(data_frame),intent(in) :: this
+        character(*),intent(in) :: headers(:)
+        integer,intent(in) :: row_indices(:)
+        complex(rk),dimension(:,:),allocatable :: vals
+
+        integer,allocatable :: data_indices(:), col_indices(:)
+        integer :: i
+
+        if (.not. this%with_headers) error stop "data frame has no headers to look up"
+
+        allocate(col_indices(size(headers,dim=1)))
+        do i=1,size(headers,dim=1)
+            col_indices(i) = findloc(this%headers,trim(adjustl(headers(i))),dim=1)
+            if (col_indices(i) < 1) error stop 'header not present in data frame'
+            if (this%type_loc(col_indices(i),1) /= COMPLEX_NUM) error stop 'column is not of complex type'
+        end do
+
+        data_indices = this%type_loc(col_indices,2)
+        
+        ! Implicit array errors -> seg fault if any row_index out of range as array would
+        vals = this%cdata(row_indices,data_indices)
+
+    end function df_get_mult_indexed_partial_col_header_complex
 
 
 ! ~~~~ Change single value of data frame -> two indices
