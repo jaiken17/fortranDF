@@ -10,6 +10,7 @@ program main
     call df%new()
     call df%append([1,2,3,4],"index")
     call df%append([3.0_rk, 2.0_rk, 7.d-6, 5.0_rk],"value")
+    call df%append([1.0_rk,2.0_rk,3.0_rk,4.0_rk],"value2")
     call df%append(["hello","world","test1","test2"], "chars")
     call df%append([.true.,.true.,.false.,.true.],"truth")
 
@@ -17,11 +18,30 @@ program main
 
     print*, " " ! newline
 
-    print*, "get column 'value': ", df%getr("value")
+    print*, "get column 'value':             ", df%getr("value")
+    print*, "get column 'value' from 2 to 3: ", df%getr("value",2,3)
     print*, "get column 1: ", df%geti(1)
     print*, "num real cols:    ", df%nreal_cols()
-    print*, "num integer cols: ", df%nreal_cols()
+    print*, "num integer cols: ", df%ninteger_cols()
     print*, "header of column 2: ", df%header(2)
+    block 
+        integer :: i
+        real(rk),allocatable :: data(:,:)
+
+        print*, "cols of 'value', 'value2', 'value':"
+        data = df%getr([" value","value2"," value"])
+        do i=1,size(data,dim=1)
+            print*, data(i,1), data(i,2), data(i,3)
+        end do
+        print*, " "
+
+        print*, "rows 2 to 4 of 'value', 'value2'"
+        data = df%getr([" value","value2"],2,4)
+        do i=1,size(data,dim=1)
+            print*, data(i,1), data(i,2)
+        end do
+
+    end block
 
     call df%destroy()
 
